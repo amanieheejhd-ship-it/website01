@@ -1,0 +1,54 @@
+// cms-service owns cms_db. Section media refs stored as plain ids (resolved at gateway/BFF later).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Page {
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  title             String
+  status            String   @default("draft") // draft | published
+  seoTitle          String   @default("") @map("seo_title")
+  seoDescription    String   @default("") @map("seo_description")
+  seoOgImageMediaId String?  @map("seo_og_image_media_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  sections Section[]
+
+  @@map("pages")
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  pageId    String   @map("page_id")
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      String // hero | scene | richText | gallery | cta
+  order     Int      @default(0)
+  payload   Json
+  mediaRefs String[] @map("media_refs")
+
+  @@unique([pageId, order]) // section order unique per page
+  @@index([pageId])
+  @@map("sections")
+}
+
+model Testimonial {
+  id            String   @id @default(uuid())
+  author        String
+  role          String   @default("")
+  company       String   @default("")
+  quote         String
+  rating        Int      @default(5)
+  avatarMediaId String?  @map("avatar_media_id")
+  featured      Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("testimonials")
+}

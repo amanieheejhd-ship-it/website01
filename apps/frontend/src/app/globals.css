@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Respect users who prefer no motion: kill smooth scroll + animations globally. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  @apply bg-background text-foreground font-sans antialiased;
+}
+
+@layer base {
+  /* Visible focus ring for keyboard users across every interactive element.
+     Written as raw CSS (not @apply) so it survives Tailwind's stricter @apply resolver,
+     and keeps a transparent outline so Windows high-contrast mode still shows focus. */
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px #0a0a0a,
+      0 0 0 4px #c8a15a;
+  }
+
+  ::selection {
+    background-color: rgba(200, 161, 90, 0.3);
+    color: #f5f5f4;
+  }
+}
+
+@layer components {
+  /* Skip link — visible only when focused. */
+  .skip-link {
+    @apply sr-only rounded-md bg-gold px-4 py-2 text-sm font-medium text-black;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-50;
+  }
+
+  /* Subtle vignette / grain seam where the Phase-6 R3F canvas will mount. */
+  .hero-seam {
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(200, 161, 90, 0.12), transparent 60%),
+      radial-gradient(100% 100% at 50% 100%, rgba(10, 10, 10, 0.9), #0a0a0a 70%);
+  }
+}

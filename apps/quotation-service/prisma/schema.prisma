@@ -1,0 +1,46 @@
+// quotation-service owns quotation_db. serviceSlugs + attachments are reference ids (no cross-db join).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model QuotationRequest {
+  id             String   @id @default(uuid())
+  contactName    String   @map("contact_name")
+  contactEmail   String   @map("contact_email")
+  contactPhone   String   @map("contact_phone")
+  serviceSlugs   String[] @map("service_slugs")
+  projectType    String   @default("") @map("project_type")
+  budgetMin      Int?     @map("budget_min")
+  budgetMax      Int?     @map("budget_max")
+  budgetCurrency String?  @map("budget_currency")
+  timeline       String   @default("")
+  details        String   @default("")
+  attachments    String[]
+  status         String   @default("requested") // requested | reviewing | quoted | won | lost
+  idempotencyKey String   @unique @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  lineItems QuoteLineItem[]
+
+  @@index([status])
+  @@map("quotation_requests")
+}
+
+model QuoteLineItem {
+  id          String           @id @default(uuid())
+  quotationId String           @map("quotation_id")
+  quotation   QuotationRequest @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  label       String
+  qty         Int              @default(1)
+  unitPrice   Int              @map("unit_price")
+  currency    String           @default("INR")
+
+  @@index([quotationId])
+  @@map("quote_line_items")
+}

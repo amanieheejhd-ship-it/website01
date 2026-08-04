@@ -1,0 +1,26 @@
+// contact-service owns contact_db. idempotencyKey is unique → double-submit guard.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContactSubmission {
+  id             String   @id @default(uuid())
+  name           String
+  email          String
+  phone          String
+  subject        String
+  message        String
+  source         String   @default("website")
+  idempotencyKey String   @unique @map("idempotency_key")
+  status         String   @default("new") // new | read | archived
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("contact_submissions")
+}

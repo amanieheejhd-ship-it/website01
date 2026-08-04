@@ -1,0 +1,10 @@
+{
+  "name": "@fardeen/types",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}

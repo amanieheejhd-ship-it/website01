@@ -1,0 +1,27 @@
+// media-service owns media_db (asset metadata; bytes live in MinIO).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id           String   @id @default(uuid())
+  bucket       String
+  objectKey    String   @map("object_key")
+  mime         String
+  size         Int      @default(0)
+  checksum     String   @default("")
+  ownerContext String   @map("owner_context") // cms | project | quotation
+  ownerId      String?  @map("owner_id")
+  variants     Json     @default("[]") // AssetVariant[] { kind, objectKey }
+  status       String   @default("pending") // pending | ready
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([ownerContext])
+  @@map("assets")
+}

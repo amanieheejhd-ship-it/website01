@@ -1,0 +1,45 @@
+// project-service owns project_db. Cross-context media refs are stored as plain ids (no cross-db joins).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  projects Project[]
+
+  @@map("categories")
+}
+
+model Project {
+  id                    String   @id @default(uuid())
+  slug                  String   @unique
+  title                 String
+  summary               String   @default("")
+  body                  String   @default("")
+  categoryId            String   @map("category_id")
+  category              Category @relation(fields: [categoryId], references: [id])
+  location              String   @default("")
+  year                  Int
+  coverMediaId          String?  @map("cover_media_id")
+  galleryMediaIds       String[] @map("gallery_media_ids")
+  status                String   @default("draft") // draft | published
+  featured              Boolean  @default(false)
+  metricsArea           String?  @map("metrics_area")
+  metricsDurationMonths Int?     @map("metrics_duration_months")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+  @@map("projects")
+}

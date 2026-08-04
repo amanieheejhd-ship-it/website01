@@ -1,0 +1,61 @@
+{
+  "name": "@fardeen/source",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Fardeen — cinematic construction experience. Nx monorepo (Next.js 15 + NestJS microservices).",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "build": "nx run-many -t build",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "typecheck": "tsc -p tsconfig.base.json --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "graph": "nx graph",
+    "dev:infra": "docker compose -f docker-compose.infra.yml up -d",
+    "dev:infra:down": "docker compose -f docker-compose.infra.yml down",
+    "affected:build": "nx affected -t build",
+    "affected:test": "nx affected -t test",
+    "affected:lint": "nx affected -t lint"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.4.9",
+    "@nestjs/schematics": "^10.2.3",
+    "@nx/eslint": "^20.3.0",
+    "@nx/eslint-plugin": "^20.3.0",
+    "@nx/jest": "^20.3.0",
+    "@nx/js": "^20.3.0",
+    "@nx/nest": "^20.3.0",
+    "@nx/next": "^20.3.0",
+    "@nx/react": "^20.3.0",
+    "@nx/webpack": "^20.3.0",
+    "@nx/workspace": "^20.3.0",
+    "@testing-library/dom": "^9",
+    "@testing-library/react": "^14",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.10",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29",
+    "jsonc-eslint-parser": "^2.4.0",
+    "nx": "^20.3.0",
+    "prettier": "^3.4.2",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.19.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    }
+  }
+}

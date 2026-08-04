@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Build output
+dist/
+build/
+out-tsc/
+tmp/
+apps/frontend/.next/
+apps/frontend/out/
+apps/**/dist/
+packages/**/dist/
+
+# Prisma generated clients
+**/generated/
+**/*.generated.ts
+
+# Test / coverage
+coverage/
+.jest-cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Docker local volumes
+.docker-data/
+
+# stray tsc/ts-node artifacts in TS lib sources (real JS presets live in packages/config)
+packages/types/src/**/*.js
+packages/types/src/**/*.js.map
+packages/shared/src/**/*.js
+packages/shared/src/**/*.js.map

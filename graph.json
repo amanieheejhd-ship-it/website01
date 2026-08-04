@@ -1,0 +1,1591 @@
+{
+  "graph": {
+    "nodes": {
+      "notification-service": {
+        "name": "notification-service",
+        "type": "app",
+        "data": {
+          "root": "apps/notification-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/notification-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/notification-service",
+                "main": "apps/notification-service/src/main.ts",
+                "tsConfig": "apps/notification-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "notification-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "notification-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/notification-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/notification-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "service-management": {
+        "name": "service-management",
+        "type": "app",
+        "data": {
+          "root": "apps/service-management",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/service-management",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/service-management",
+                "main": "apps/service-management/src/main.ts",
+                "tsConfig": "apps/service-management/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "service-management:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "service-management",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/service-management",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/service-management/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "quotation-service": {
+        "name": "quotation-service",
+        "type": "app",
+        "data": {
+          "root": "apps/quotation-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/quotation-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/quotation-service",
+                "main": "apps/quotation-service/src/main.ts",
+                "tsConfig": "apps/quotation-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "quotation-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "quotation-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/quotation-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/quotation-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "contact-service": {
+        "name": "contact-service",
+        "type": "app",
+        "data": {
+          "root": "apps/contact-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/contact-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/contact-service",
+                "main": "apps/contact-service/src/main.ts",
+                "tsConfig": "apps/contact-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "contact-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "contact-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/contact-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/contact-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "project-service": {
+        "name": "project-service",
+        "type": "app",
+        "data": {
+          "root": "apps/project-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/project-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/project-service",
+                "main": "apps/project-service/src/main.ts",
+                "tsConfig": "apps/project-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "project-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "project-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/project-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/project-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "admin-service": {
+        "name": "admin-service",
+        "type": "app",
+        "data": {
+          "root": "apps/admin-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/admin-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/admin-service",
+                "main": "apps/admin-service/src/main.ts",
+                "tsConfig": "apps/admin-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "admin-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "admin-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/admin-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/admin-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "media-service": {
+        "name": "media-service",
+        "type": "app",
+        "data": {
+          "root": "apps/media-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/media-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/media-service",
+                "main": "apps/media-service/src/main.ts",
+                "tsConfig": "apps/media-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "media-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "media-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/media-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/media-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "auth-service": {
+        "name": "auth-service",
+        "type": "app",
+        "data": {
+          "root": "apps/auth-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/auth-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/auth-service",
+                "main": "apps/auth-service/src/main.ts",
+                "tsConfig": "apps/auth-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "auth-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "auth-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/auth-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/auth-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "cms-service": {
+        "name": "cms-service",
+        "type": "app",
+        "data": {
+          "root": "apps/cms-service",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/cms-service",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/cms-service",
+                "main": "apps/cms-service/src/main.ts",
+                "tsConfig": "apps/cms-service/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "cms-service:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "cms-service",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/cms-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/cms-service/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "config": {
+        "name": "config",
+        "type": "lib",
+        "data": {
+          "root": "packages/config",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "packages/config",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "config",
+          "tags": [
+            "npm:private",
+            "type:config"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/config",
+              "packageExports": {
+                ".": "./src/index.ts",
+                "./tailwind-preset": "./tailwind/preset.js",
+                "./jest-preset": "./jest/preset.js"
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/config/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "shared": {
+        "name": "shared",
+        "type": "lib",
+        "data": {
+          "root": "packages/shared",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "packages/shared",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/shared",
+                "main": "packages/shared/src/index.ts",
+                "tsConfig": "packages/shared/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            }
+          },
+          "name": "shared",
+          "tags": [
+            "npm:private",
+            "type:shared"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/shared",
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/shared/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "types": {
+        "name": "types",
+        "type": "lib",
+        "data": {
+          "root": "packages/types",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "packages/types",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/types",
+                "main": "packages/types/src/index.ts",
+                "tsConfig": "packages/types/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            }
+          },
+          "name": "types",
+          "tags": [
+            "npm:private",
+            "type:types"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/types",
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/types/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "utils": {
+        "name": "utils",
+        "type": "lib",
+        "data": {
+          "root": "packages/utils",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "packages/utils",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/utils",
+                "main": "packages/utils/src/index.ts",
+                "tsConfig": "packages/utils/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            }
+          },
+          "name": "utils",
+          "tags": [
+            "npm:private",
+            "type:utils"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/utils",
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/utils/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "frontend": {
+        "name": "frontend",
+        "type": "app",
+        "data": {
+          "root": "apps/frontend",
+          "targets": {
+            "build": {
+              "options": {
+                "cwd": "apps/frontend",
+                "tty": false,
+                "command": "next build"
+              },
+              "dependsOn": [
+                "^build"
+              ],
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/apps/frontend/.next",
+                "{workspaceRoot}/apps/frontend/.next/!(cache)"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "options": {
+                "cwd": "apps/frontend",
+                "command": "next dev"
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "start": {
+              "options": {
+                "cwd": "apps/frontend",
+                "command": "next start"
+              },
+              "dependsOn": [
+                "build"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "options": {
+                "cwd": "apps/frontend",
+                "command": "next start"
+              },
+              "dependsOn": [
+                "build"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "pnpm exec nx watch --projects frontend --includeDependentProjects -- pnpm exec nx build-deps frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/frontend",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "frontend",
+          "tags": [
+            "npm:private",
+            "type:app-frontend"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/frontend",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/frontend/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "gateway": {
+        "name": "gateway",
+        "type": "app",
+        "data": {
+          "root": "apps/gateway",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/gateway",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/gateway",
+                "main": "apps/gateway/src/main.ts",
+                "tsConfig": "apps/gateway/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "gateway:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "gateway",
+          "tags": [
+            "npm:private",
+            "type:app-service"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/gateway",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/gateway/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "ui": {
+        "name": "ui",
+        "type": "lib",
+        "data": {
+          "root": "packages/ui",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "packages/ui",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "{workspaceRoot}/eslint.config.mjs"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/packages/ui",
+                "main": "packages/ui/src/index.ts",
+                "tsConfig": "packages/ui/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            }
+          },
+          "name": "ui",
+          "tags": [
+            "npm:private",
+            "type:ui"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@fardeen/ui",
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "packages/ui/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "notification-service": [
+        {
+          "source": "notification-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "notification-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "notification-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "service-management": [
+        {
+          "source": "service-management",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "service-management",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "service-management",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "quotation-service": [
+        {
+          "source": "quotation-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "quotation-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "quotation-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "contact-service": [
+        {
+          "source": "contact-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "contact-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "contact-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "project-service": [
+        {
+          "source": "project-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "project-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "project-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "admin-service": [
+        {
+          "source": "admin-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "admin-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "admin-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "media-service": [
+        {
+          "source": "media-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "media-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "media-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "auth-service": [
+        {
+          "source": "auth-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "auth-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "auth-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "cms-service": [
+        {
+          "source": "cms-service",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "cms-service",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "cms-service",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "config": [],
+      "shared": [
+        {
+          "source": "shared",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "shared",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "types": [],
+      "utils": [],
+      "frontend": [
+        {
+          "source": "frontend",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "frontend",
+          "target": "ui",
+          "type": "static"
+        },
+        {
+          "source": "frontend",
+          "target": "utils",
+          "type": "static"
+        },
+        {
+          "source": "frontend",
+          "target": "config",
+          "type": "static"
+        }
+      ],
+      "gateway": [
+        {
+          "source": "gateway",
+          "target": "shared",
+          "type": "static"
+        },
+        {
+          "source": "gateway",
+          "target": "types",
+          "type": "static"
+        },
+        {
+          "source": "gateway",
+          "target": "utils",
+          "type": "static"
+        }
+      ],
+      "ui": [
+        {
+          "source": "ui",
+          "target": "utils",
+          "type": "static"
+        }
+      ]
+    }
+  }
+}

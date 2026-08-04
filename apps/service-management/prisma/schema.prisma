@@ -1,0 +1,55 @@
+// service-management owns service_db (database-per-service).
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ServiceOffering {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  tagline     String   @default("")
+  description String   @default("")
+  icon        String   @default("")
+  heroMediaId String?  @map("hero_media_id")
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  features     Feature[]
+  pricingTiers PricingTier[]
+
+  @@map("service_offerings")
+}
+
+model Feature {
+  id          String          @id @default(uuid())
+  offeringId  String          @map("offering_id")
+  offering    ServiceOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  title       String
+  description String          @default("")
+  order       Int             @default(0)
+
+  @@index([offeringId])
+  @@map("features")
+}
+
+model PricingTier {
+  id         String          @id @default(uuid())
+  offeringId String          @map("offering_id")
+  offering   ServiceOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  name       String
+  priceFrom  Int             @map("price_from")
+  currency   String          @default("INR")
+  unit       String          @default("")
+  inclusions String[]
+
+  @@index([offeringId])
+  @@map("pricing_tiers")
+}

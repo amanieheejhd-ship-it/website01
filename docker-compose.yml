@@ -1,0 +1,367 @@
+# ============================================================================
+#  Fardeen — DEV environment.  One command:  docker compose up
+#
+#  All 11 Node apps share ONE dev image (infra/docker/node.Dockerfile: dev target):
+#  the repo is bind-mounted for hot reload, node_modules lives in a named volume so the
+#  host mount never clobbers the container-installed deps, and each app runs its Nx dev
+#  (watch) target. Health checks + depends_on:service_healthy enforce boot order.
+#
+#  Copy .env.example -> .env first (compose auto-loads .env for ${...} interpolation).
+# ============================================================================
+name: fardeen
+
+# ─────────────────────── reusable fragments (anchors) ───────────────────────
+x-node-dev: &node-dev
+  build:
+    context: .
+    dockerfile: infra/docker/node.Dockerfile
+    target: dev
+  image: fardeen-node:dev
+  restart: unless-stopped
+  networks: [fardeen-net]
+  volumes:
+    - .:/workspace
+    - workspace_node_modules:/workspace/node_modules
+    # shadow host caches/build output (created on Windows) so they can't corrupt the Linux container
+    - /workspace/.nx
+    - /workspace/apps/frontend/.next
+
+x-svc-env: &svc-env
+  NODE_ENV: development
+  LOG_LEVEL: ${LOG_LEVEL:-debug}
+  HTTP_PORT: "3001"
+  REDIS_URL: redis://redis:6379
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  READY_CHECK_REDIS: "true"
+  # WSL2/Docker file-watch hot reload needs polling (see nest tsconfig watchOptions + Next)
+  CHOKIDAR_USEPOLLING: "true"
+  WATCHPACK_POLLING: "true"
+
+x-svc-healthcheck: &svc-healthcheck
+  test:
+    - CMD
+    - node
+    - -e
+    - "require('http').get('http://127.0.0.1:3001/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  interval: 10s
+  timeout: 5s
+  retries: 15
+  start_period: 60s
+
+x-svc-depends: &svc-depends
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+
+services:
+  # ─────────────────────────── infrastructure ───────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fardeen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fardeen_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-fardeen}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fardeen} -d ${POSTGRES_DB:-fardeen}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    restart: unless-stopped
+    networks: [fardeen-net]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fardeen_dev_pw}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fardeen_dev_pw}
+      MINIO_BUCKET: ${MINIO_BUCKET:-fardeen-media}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          echo 'waiting for minio...'; sleep 2;
+        done;
+        mc mb --ignore-existing local/"$${MINIO_BUCKET}";
+        mc anonymous set download local/"$${MINIO_BUCKET}" || true;
+        echo "bucket ready: $${MINIO_BUCKET}";
+    restart: "no"
+
+  # ─────────────────────────── gateway (public HTTP) ───────────────────────────
+  gateway:
+    <<: *node-dev
+    command: pnpm nx dev gateway
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: gateway
+      GATEWAY_PORT: "4000"
+      GATEWAY_GLOBAL_PREFIX: api/v1
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      # service host:port map (consumed in Phase 4 by the ClientProxy wiring)
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: "4010"
+      CMS_SERVICE_HOST: cms-service
+      CMS_SERVICE_PORT: "4011"
+      PROJECT_SERVICE_HOST: project-service
+      PROJECT_SERVICE_PORT: "4012"
+      SERVICE_MGMT_HOST: service-management
+      SERVICE_MGMT_PORT: "4013"
+      CONTACT_SERVICE_HOST: contact-service
+      CONTACT_SERVICE_PORT: "4014"
+      QUOTATION_SERVICE_HOST: quotation-service
+      QUOTATION_SERVICE_PORT: "4015"
+      MEDIA_SERVICE_HOST: media-service
+      MEDIA_SERVICE_PORT: "4016"
+      ADMIN_SERVICE_HOST: admin-service
+      ADMIN_SERVICE_PORT: "4017"
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: "4018"
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:4000/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      cms-service:
+        condition: service_healthy
+      project-service:
+        condition: service_healthy
+      service-management:
+        condition: service_healthy
+      contact-service:
+        condition: service_healthy
+      quotation-service:
+        condition: service_healthy
+      media-service:
+        condition: service_healthy
+      admin-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+
+  # ─────────────────────────── microservices (TCP + health HTTP) ───────────────────────────
+  auth-service:
+    <<: *node-dev
+    command: pnpm nx dev auth-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: auth-service
+      TCP_PORT: "4010"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/auth_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  cms-service:
+    <<: *node-dev
+    command: pnpm nx dev cms-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: cms-service
+      TCP_PORT: "4011"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/cms_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  project-service:
+    <<: *node-dev
+    command: pnpm nx dev project-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: project-service
+      TCP_PORT: "4012"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/project_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  service-management:
+    <<: *node-dev
+    command: pnpm nx dev service-management
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: service-management
+      TCP_PORT: "4013"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/service_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  contact-service:
+    <<: *node-dev
+    command: pnpm nx dev contact-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: contact-service
+      TCP_PORT: "4014"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/contact_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  quotation-service:
+    <<: *node-dev
+    command: pnpm nx dev quotation-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: quotation-service
+      TCP_PORT: "4015"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/quotation_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  media-service:
+    <<: *node-dev
+    command: pnpm nx dev media-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: media-service
+      TCP_PORT: "4016"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/media_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+      READY_CHECK_MINIO: "true"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fardeen_dev_pw}
+      MINIO_BUCKET: ${MINIO_BUCKET:-fardeen-media}
+    healthcheck: *svc-healthcheck
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+
+  # admin-service: BFF/aggregator — NO database (no DATABASE_URL, no postgres dependency)
+  admin-service:
+    <<: *node-dev
+    command: pnpm nx dev admin-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: admin-service
+      TCP_PORT: "4017"
+    healthcheck: *svc-healthcheck
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  notification-service:
+    <<: *node-dev
+    command: pnpm nx dev notification-service
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: notification-service
+      TCP_PORT: "4018"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-fardeen_dev_pw}@postgres:5432/notification_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-Fardeen <no-reply@fardeen.example>}
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+
+  # ─────────────────────────── frontend (Next.js dev) ───────────────────────────
+  frontend:
+    <<: *node-dev
+    command: pnpm nx dev frontend
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000/api/v1}
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+networks:
+  fardeen-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  workspace_node_modules:

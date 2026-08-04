@@ -1,0 +1,27 @@
+# Keep build context small and prevent host artifacts (esp. host node_modules with
+# native binaries / wrong platform) from leaking into images.
+**/node_modules
+node_modules
+**/dist
+dist
+**/.next
+.next
+.nx
+**/.turbo
+coverage
+**/coverage
+.git
+.gitignore
+**/*.log
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*
+!.env.example
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.vscode
+.idea
+**/*.md
+!README.md

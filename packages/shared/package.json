@@ -1,0 +1,16 @@
+{
+  "name": "@fardeen/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@fardeen/types": "workspace:*",
+    "@fardeen/utils": "workspace:*"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.4.15",
+    "ioredis": "^5.4.2",
+    "rxjs": "^7.8.1"
+  }
+}

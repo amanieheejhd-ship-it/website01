@@ -1,0 +1,449 @@
+# ============================================================================
+#  Fardeen — PRODUCTION topology.
+#    docker compose -f docker-compose.prod.yml build
+#    docker compose -f docker-compose.prod.yml up -d
+#
+#  Differences from dev: per-app minimal non-root prod images (multi-stage, prod deps only),
+#  NO source bind mounts / no node_modules volume, restart: unless-stopped, resource limits,
+#  service ports internal-only (only gateway + frontend are published). Prisma migrations run
+#  as a one-shot job (profile: migrate), never on service boot.
+#
+#  Set strong secrets in .env before deploying (POSTGRES_PASSWORD, MINIO_ROOT_PASSWORD, ...).
+# ============================================================================
+name: fardeen-prod
+
+x-svc-env: &svc-env
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  HTTP_PORT: "3001"
+  REDIS_URL: redis://redis:6379
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  READY_CHECK_REDIS: "true"
+
+x-svc-healthcheck: &svc-healthcheck
+  test:
+    - CMD
+    - node
+    - -e
+    - "require('http').get('http://127.0.0.1:3001/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  interval: 15s
+  timeout: 5s
+  retries: 10
+  start_period: 40s
+
+x-svc-depends: &svc-depends
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+
+x-deploy-svc: &deploy-svc
+  resources:
+    limits:
+      cpus: "0.75"
+      memory: 512M
+    reservations:
+      memory: 128M
+
+x-node-build: &node-build
+  context: .
+  dockerfile: infra/docker/node.Dockerfile
+
+services:
+  # ─────────────────────────── infrastructure ───────────────────────────
+  postgres:
+    build:
+      context: infra/postgres
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fardeen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_prod}
+      POSTGRES_DB: ${POSTGRES_DB:-fardeen}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fardeen} -d ${POSTGRES_DB:-fardeen}"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy: *deploy-svc
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    restart: unless-stopped
+    networks: [fardeen-net]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    deploy: *deploy-svc
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change_me_in_prod}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy: *deploy-svc
+
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change_me_in_prod}
+      MINIO_BUCKET: ${MINIO_BUCKET:-fardeen-media}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          echo 'waiting for minio...'; sleep 2;
+        done;
+        mc mb --ignore-existing local/"$${MINIO_BUCKET}";
+        mc anonymous set download local/"$${MINIO_BUCKET}" || true;
+        echo "bucket ready: $${MINIO_BUCKET}";
+    restart: "no"
+
+  # ─────────────────────────── one-shot migration job (seam) ───────────────────────────
+  # `docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate`
+  migrate:
+    profiles: ["migrate"]
+    build:
+      <<: *node-build
+      target: tools
+    restart: "no"
+    networks: [fardeen-net]
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-fardeen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_prod}
+    command: ["sh", "infra/scripts/migrate.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─────────────────────────── gateway (public) ───────────────────────────
+  gateway:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: gateway
+        PROJECT_PKG: "@fardeen/gateway"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: gateway
+      GATEWAY_PORT: "4000"
+      GATEWAY_GLOBAL_PREFIX: api/v1
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: "4010"
+      CMS_SERVICE_HOST: cms-service
+      CMS_SERVICE_PORT: "4011"
+      PROJECT_SERVICE_HOST: project-service
+      PROJECT_SERVICE_PORT: "4012"
+      SERVICE_MGMT_HOST: service-management
+      SERVICE_MGMT_PORT: "4013"
+      CONTACT_SERVICE_HOST: contact-service
+      CONTACT_SERVICE_PORT: "4014"
+      QUOTATION_SERVICE_HOST: quotation-service
+      QUOTATION_SERVICE_PORT: "4015"
+      MEDIA_SERVICE_HOST: media-service
+      MEDIA_SERVICE_PORT: "4016"
+      ADMIN_SERVICE_HOST: admin-service
+      ADMIN_SERVICE_PORT: "4017"
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: "4018"
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:4000/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    deploy: *deploy-svc
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      cms-service:
+        condition: service_healthy
+      project-service:
+        condition: service_healthy
+      service-management:
+        condition: service_healthy
+      contact-service:
+        condition: service_healthy
+      quotation-service:
+        condition: service_healthy
+      media-service:
+        condition: service_healthy
+      admin-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+
+  # ─────────────────────────── microservices (internal only) ───────────────────────────
+  auth-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: auth-service
+        PROJECT_PKG: "@fardeen/auth-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: auth-service
+      TCP_PORT: "4010"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/auth_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  cms-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: cms-service
+        PROJECT_PKG: "@fardeen/cms-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: cms-service
+      TCP_PORT: "4011"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/cms_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  project-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: project-service
+        PROJECT_PKG: "@fardeen/project-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: project-service
+      TCP_PORT: "4012"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/project_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  service-management:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: service-management
+        PROJECT_PKG: "@fardeen/service-management"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: service-management
+      TCP_PORT: "4013"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/service_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  contact-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: contact-service
+        PROJECT_PKG: "@fardeen/contact-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: contact-service
+      TCP_PORT: "4014"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/contact_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  quotation-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: quotation-service
+        PROJECT_PKG: "@fardeen/quotation-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: quotation-service
+      TCP_PORT: "4015"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/quotation_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  media-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: media-service
+        PROJECT_PKG: "@fardeen/media-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: media-service
+      TCP_PORT: "4016"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/media_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+      READY_CHECK_MINIO: "true"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change_me_in_prod}
+      MINIO_BUCKET: ${MINIO_BUCKET:-fardeen-media}
+    healthcheck: *svc-healthcheck
+    deploy: *deploy-svc
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+
+  admin-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: admin-service
+        PROJECT_PKG: "@fardeen/admin-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: admin-service
+      TCP_PORT: "4017"
+    healthcheck: *svc-healthcheck
+    deploy: *deploy-svc
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      <<: *node-build
+      target: prod
+      args:
+        PROJECT: notification-service
+        PROJECT_PKG: "@fardeen/notification-service"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      <<: *svc-env
+      SERVICE_NAME: notification-service
+      TCP_PORT: "4018"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fardeen}:${POSTGRES_PASSWORD:-change_me_in_prod}@postgres:5432/notification_db?schema=public
+      READY_CHECK_POSTGRES: "true"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-Fardeen <no-reply@fardeen.example>}
+    healthcheck: *svc-healthcheck
+    depends_on: *svc-depends
+    deploy: *deploy-svc
+
+  # ─────────────────────────── frontend (public) ───────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+      target: prod
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000/api/v1}
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    deploy: *deploy-svc
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+networks:
+  fardeen-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

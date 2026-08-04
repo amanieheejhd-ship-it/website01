@@ -1,0 +1,122 @@
+# ============================================================================
+#  Fardeen — INFRA-ONLY stack for LIGHT LOCAL DEV (low-resource machines).
+#
+#  Runs ONLY Postgres + Redis + MinIO in Docker; the Node apps (gateway, the 9
+#  services, frontend) run NATIVELY on the host via Nx and connect to this infra
+#  on localhost. Same images / healthchecks / volumes as docker-compose.yml
+#  (shared `name: fardeen`, so data + network are the same as the full dev stack).
+#
+#    pnpm dev:infra          # start infra (this file)
+#    pnpm nx dev gateway     # run an app natively (reads .env.local → localhost)
+#    pnpm dev:infra:down     # stop infra
+#
+#  The full `docker compose up` (docker-compose.yml) remains the parity/CI path.
+# ============================================================================
+name: fardeen
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fardeen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fardeen_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-fardeen}
+    # Host ports are shifted off the defaults (5432/6379/9000 were occupied by other
+    # local stacks on this machine). Container-internal ports stay standard. .env.local
+    # points the native apps at these host ports.
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fardeen} -d ${POSTGRES_DB:-fardeen}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    restart: unless-stopped
+    networks: [fardeen-net]
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fardeen_dev_pw}
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [fardeen-net]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fardeen}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fardeen_dev_pw}
+      MINIO_BUCKET: ${MINIO_BUCKET:-fardeen-media}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          echo 'waiting for minio...'; sleep 2;
+        done;
+        mc mb --ignore-existing local/"$${MINIO_BUCKET}";
+        mc anonymous set download local/"$${MINIO_BUCKET}" || true;
+        echo "bucket ready: $${MINIO_BUCKET}";
+    restart: "no"
+
+  # Dev mail catcher — SMTP on 1025, web UI on http://localhost:1080. notification-service sends here.
+  # Prod swaps SMTP_HOST/PORT to a real transport via config (never hardcoded).
+  maildev:
+    image: maildev/maildev:latest
+    restart: unless-stopped
+    networks: [fardeen-net]
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:1080/healthz',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+networks:
+  fardeen-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

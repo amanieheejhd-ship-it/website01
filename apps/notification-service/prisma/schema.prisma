@@ -1,0 +1,35 @@
+// notification-service owns notification_db. Delivery log + a durable idempotency ledger.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  channel       String // email | webhook
+  template      String
+  to            String   @map("to_addr")
+  payload       Json
+  status        String   @default("queued") // queued | sent | failed
+  attempts      Int      @default(0)
+  correlationId String   @map("correlation_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([correlationId])
+  @@index([status])
+  @@map("notifications")
+}
+
+// Durable idempotency ledger — a correlationId is recorded once its event is fully handled,
+// so redelivery (retry / reclaim) is a safe no-op.
+model ProcessedEvent {
+  correlationId String   @id @map("correlation_id")
+  processedAt   DateTime @default(now()) @map("processed_at")
+
+  @@map("processed_events")
+}
