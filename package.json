@@ -37,6 +37,7 @@
     "@nx/react": "^20.3.0",
     "@nx/webpack": "^20.3.0",
     "@nx/workspace": "^20.3.0",
+    "@playwright/test": "^1.62.1",
     "@testing-library/dom": "^9",
     "@testing-library/react": "^14",
     "@types/jest": "^29.5.14",

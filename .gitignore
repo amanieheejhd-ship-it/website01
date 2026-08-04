@@ -51,3 +51,10 @@ packages/types/src/**/*.js
 packages/types/src/**/*.js.map
 packages/shared/src/**/*.js
 packages/shared/src/**/*.js.map
+
+# Dev-mode + e2e artifacts
+.dev-logs/
+.dev-pids
+e2e-report/
+test-results/
+playwright-report/

@@ -98,22 +98,29 @@ docker compose up           # (add -d to run detached)
 - **Gateway (REST):** http://localhost:4000/api/v1/health → `{ "data": { "status": "ok", ... } }`
 - **MinIO console:** http://localhost:9001
 
-### Light dev mode (low-resource machines)
+### Light dev mode (Windows, no Docker) — one persistent terminal
 
-Running every app in Docker is heavy on Windows/WSL2. Instead, run **only the infra in Docker**
-(Postgres + Redis + MinIO) and the **Node apps natively** on the host via Nx:
+Docker/WSL2 is unavailable here, so infra runs **natively** (Postgres 5432 + Redis 6379, started by
+`fardeen-dev-infra\start-infra.ps1`) and the services run as **compiled `dist`** (`node dist/main.js`,
+~70 MB each) to stay light on memory. **Run the whole stack from one VS Code terminal — it stays live
+until you close it:**
 
-```bash
-pnpm dev:infra              # start Postgres + Redis + MinIO (docker-compose.infra.yml)
-pnpm nx dev gateway        # run just the app(s) you need, natively
-pnpm nx dev frontend       #   → connect to the Dockerized infra on localhost
-pnpm nx dev auth-service   #   (start any subset of the 9 services)
-pnpm dev:infra:down        # stop the infra when done
+```powershell
+.\dev-up.ps1            # ensure infra, build dist if needed, start 10 services + frontend, hold the terminal
+.\dev-up.ps1 -Prod      # low-memory: serve the frontend as a production build (next start ~200MB, not next dev)
+.\dev-up.ps1 -Rebuild   # force a fresh packages + services dist build first
 ```
 
-Natively-run apps read [`.env.local`](.env.local) (git-ignored, auto-loaded by Nx), which points
-`POSTGRES_HOST`/`REDIS_HOST`/`MINIO_ENDPOINT` at `localhost`; the health dependency hosts also
-default to `localhost` in dev. The full `docker compose up` above remains the parity/CI path.
+`dev-up.ps1` streams a status line + the URLs and keeps the stack alive **exactly as long as this
+terminal / VS Code is open**. Every child process lives in a Windows job object with
+`KILL_ON_JOB_CLOSE`, so pressing **Ctrl+C** or **closing the terminal** stops all services cleanly —
+no orphans. To clean up after a hard-closed terminal, from any terminal run `.\dev-down.ps1`.
+
+- **Site:** http://localhost:3000 · **Admin:** http://localhost:3000/admin · **API:** http://localhost:4000/api/v1
+- Admin logins: `admin@fardeen.local` / `Admin@12345` · `editor@fardeen.local` / `Editor@12345`
+
+Each app reads [`.env.local`](.env.local) (git-ignored); compiled runs are bootstrapped by
+`scripts/run-svc.cjs`, which loads the root + per-app `.env.local` before `node dist/main.js`.
 
 **Health model.** Every container has a health check. The gateway and frontend expose real
 HTTP liveness/readiness routes; each Nest microservice runs a small HTTP server (`/health`,
