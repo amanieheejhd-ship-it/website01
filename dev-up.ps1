@@ -107,6 +107,15 @@ try {
     $t = 0; while ((-not (Test-Port 5432) -or -not (Test-Port 6379)) -and $t -lt 20) { Start-Sleep 1; $t++ }
   }
   if (-not (Test-Port 5432) -or -not (Test-Port 6379)) { throw "Postgres/Redis did not come up." }
+  # An open port != accepting queries. Wait for Postgres to be truly ready so the first services
+  # started below do not race it and crash with P1001.
+  $pgReady = 'C:\Users\EARNINGFISH\fardeen-dev-infra\pg\pgsql\bin\pg_isready.exe'
+  if (Test-Path $pgReady) {
+    $t = 0
+    while ($t -lt 30) { & $pgReady -h 127.0.0.1 -p 5432 *> $null; if ($LASTEXITCODE -eq 0) { break }; Start-Sleep 1; $t++ }
+  } else {
+    Start-Sleep 6
+  }
   Write-Host "      up." -ForegroundColor Green
   if (-not (Test-Port 9000)) {
     Write-Host "      note: MinIO (9000) is not running - media-service (uploads) will be unavailable; the rest of the stack is fine." -ForegroundColor Yellow
