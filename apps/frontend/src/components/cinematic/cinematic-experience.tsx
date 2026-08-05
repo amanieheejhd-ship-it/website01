@@ -6,8 +6,9 @@ import Lenis from 'lenis';
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { createDirector } from '../../lib/cinematic/director';
+import { createPipeline, type Pipeline } from '../../lib/cinematic/pipeline';
 import { SCENE_COUNT, SCENES } from '../../lib/cinematic/scenes';
-import { createWorld } from '../../lib/cinematic/world';
+import { createWorld, enrichWorld } from '../../lib/cinematic/world';
 
 /**
  * The pinned cinematic canvas — raw three.js (no react-reconciler). A tall scroll spacer holds a
@@ -39,6 +40,10 @@ export default function CinematicExperience() {
       alpha: false,
     });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); // DPR capped at 2
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const setSize = () => {
       const w = window.innerWidth;
@@ -49,28 +54,32 @@ export default function CinematicExperience() {
     };
     setSize();
 
-    // ---- demand render loop ----
+    // ---- demand render loop (one frame per scrub tick) ----
     const clock = new THREE.Clock();
     let frames = 0;
     let lastFps = performance.now();
     let fps = 0;
     let renderReq = false;
+    let pipeline: Pipeline | null = null;
     const win = window as unknown as { __fardeenPerf?: unknown; __fardeenSeek?: (p: number) => void };
     const render = () => {
       renderReq = false;
+      if (!pipeline) return;
       world.updateAmbient(clock.getElapsedTime());
       world.camera.lookAt(lookTarget);
-      renderer.render(world.scene, world.camera);
+      pipeline.render(); // ACES + IBL + SSAO/bloom/vignette (or direct render when degraded)
       frames += 1;
       const now = performance.now();
       if (now - lastFps >= 500) {
         fps = Math.round((frames * 1000) / (now - lastFps));
         frames = 0;
         lastFps = now;
+        pipeline.adapt(fps); // drop a quality tier on sustained low fps rather than freeze
         win.__fardeenPerf = {
           dpr: renderer.getPixelRatio(),
           drawCalls: renderer.info.render.calls,
           triangles: renderer.info.render.triangles,
+          tier: pipeline.tier(),
           fps,
         };
       }
@@ -81,6 +90,9 @@ export default function CinematicExperience() {
         requestAnimationFrame(render);
       }
     };
+
+    pipeline = createPipeline(renderer, world.scene, world.camera, invalidate);
+    void enrichWorld(world, renderer, invalidate); // async: HDRI IBL + real PBR textures (never blocks LCP)
 
     // ---- Lenis (sole scroll authority) → single gsap.ticker → ScrollTrigger ----
     const lenis = new Lenis({
@@ -111,6 +123,7 @@ export default function CinematicExperience() {
 
     const onResize = () => {
       setSize();
+      pipeline.setSize(window.innerWidth, window.innerHeight);
       ScrollTrigger.refresh();
       invalidate();
     };
@@ -121,6 +134,7 @@ export default function CinematicExperience() {
       delete win.__fardeenSeek;
       window.removeEventListener('resize', onResize);
       director.dispose();
+      pipeline.dispose();
       gsap.ticker.remove(raf);
       lenis.off('scroll', ScrollTrigger.update);
       lenis.destroy();

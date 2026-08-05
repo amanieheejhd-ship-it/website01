@@ -58,3 +58,10 @@ packages/shared/src/**/*.js.map
 e2e-report/
 test-results/
 playwright-report/
+
+# Cinematic CC0 assets (binaries git-ignored; see SOURCES.md manifest)
+apps/frontend/public/cinematic/**
+!apps/frontend/public/cinematic/SOURCES.md
+
+# TS build cache
+apps/frontend/tsconfig.tsbuildinfo

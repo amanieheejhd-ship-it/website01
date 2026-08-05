@@ -1,10 +1,12 @@
 import * as THREE from 'three';
+import { createModelLoader, loadEnvironment, loadModel, loadPbr, type PbrMaps } from './assets';
 
 /**
  * Builds the entire procedural cinematic world in raw three.js (no react-reconciler / R3F — React
  * stays completely out of the render path). Returns the scene, camera, a set of mutable "handles"
  * the director tweens, an ambient-update fn, and a disposer. All geometry is simple boxes/planes/
- * instances with clean seams to swap in real GLB later.
+ * instances with clean seams to swap in real GLB later. `enrichWorld()` (below) does the async
+ * realism pass — HDRI IBL + real PBR textures — grafted onto these same materials.
  */
 
 export interface WorldHandles {
@@ -28,6 +30,8 @@ export interface WorldHandles {
     interior: THREE.Group;
     interiorLight: THREE.PointLight;
     windowMesh: THREE.InstancedMesh;
+    floorMat: THREE.MeshStandardMaterial;
+    furnitureGroup: THREE.Group;
   };
   grass: { group: THREE.Group; material: THREE.ShaderMaterial };
   birds: { group: THREE.Group; flock: THREE.Group; material: THREE.ShaderMaterial };
@@ -369,10 +373,8 @@ function buildVilla() {
   // interior (warm, hidden until scenes 6–9)
   const interior = new THREE.Group();
   interior.visible = false;
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.6, 7.6),
-    new THREE.MeshStandardMaterial({ color: 0x2a221b, roughness: 0.7, side: THREE.DoubleSide }),
-  );
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0xece7dd, roughness: 0.35, side: THREE.DoubleSide });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 7.6), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = 0.46;
   interior.add(floor);
@@ -384,11 +386,13 @@ function buildVilla() {
     { s: [0.6, 1.6, 2], p: [3.4, 1.2, 0] },
   ];
   const furnMat = new THREE.MeshStandardMaterial({ color: 0x3a2f26, roughness: 0.6 });
+  const furnitureGroup = new THREE.Group(); // procedural boxes; hidden once real GLB furniture loads
   for (const f of furn) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(...f.s), furnMat);
     m.position.set(...f.p);
-    interior.add(m);
+    furnitureGroup.add(m);
   }
+  interior.add(furnitureGroup);
   const interiorLight = new THREE.PointLight(0xffb968, 0, 14);
   interiorLight.position.set(0, 2.4, 0);
   interior.add(interiorLight);
@@ -409,6 +413,8 @@ function buildVilla() {
     windowMesh: winMesh,
     interior,
     interiorLight,
+    floorMat,
+    furnitureGroup,
   };
 }
 
@@ -422,11 +428,22 @@ export function createWorld(): World {
   const skyMat = (sky as unknown as { userData: { mat: THREE.ShaderMaterial } }).userData.mat;
   scene.add(sky);
 
-  const fog = new THREE.Fog(0x223038, 12, 55);
+  const fog = new THREE.Fog(0x223038, 14, 60);
   scene.fog = fog;
-  const ambient = new THREE.AmbientLight(0x9fb4c9, 0.55);
-  const sun = new THREE.DirectionalLight(0x9fb4c9, 1.1);
-  sun.position.set(8, 10, 6);
+  // HDRI env supplies most of the ambient/reflections, so keep the fill low; the sun is the shadow key.
+  const ambient = new THREE.AmbientLight(0x9fb4c9, 0.3);
+  const sun = new THREE.DirectionalLight(0xfff1e0, 2.7);
+  sun.position.set(9, 12, 7);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 60;
+  sun.shadow.camera.left = -16;
+  sun.shadow.camera.right = 16;
+  sun.shadow.camera.top = 16;
+  sun.shadow.camera.bottom = -16;
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
   scene.add(ambient, sun);
 
   const terrain = buildTerrain();
@@ -444,6 +461,20 @@ export function createWorld(): World {
   gate.group.visible = false; // appears as the camera approaches in Scene 5
   scene.add(gate.group);
 
+  // Shadows: the villa + gate cast and receive; the terrain receives; sky/grass/birds opt out.
+  villa.root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
+  });
+  gate.group.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) m.castShadow = true;
+  });
+  terrain.mesh.receiveShadow = true;
+
   const handles: WorldHandles = {
     env: { skyMat, fog, sun, ambient },
     villa: {
@@ -460,6 +491,8 @@ export function createWorld(): World {
       interior: villa.interior,
       interiorLight: villa.interiorLight,
       windowMesh: villa.windowMesh,
+      floorMat: villa.floorMat,
+      furnitureGroup: villa.furnitureGroup,
     },
     grass: { group: grass.group, material: grass.material },
     birds: { group: birds.group, flock: birds.flock, material: birds.material },
@@ -484,4 +517,101 @@ export function createWorld(): World {
   };
 
   return { scene, camera, handles, updateAmbient, dispose };
+}
+
+/**
+ * Async realism pass (post-mount, off the SSR/LCP path): loads the HDRI environment for image-based
+ * lighting + reflections, and real CC0 PBR textures grafted onto the procedural materials. Each asset
+ * is guarded — if it fails the material keeps its solid colour, so a scene never breaks. Call
+ * `invalidate()` after each graft so the demand loop repaints. The director's colour/opacity/emissive
+ * tweens keep working (colour tints the albedo map).
+ */
+export async function enrichWorld(
+  world: World,
+  renderer: THREE.WebGLRenderer,
+  invalidate: () => void,
+): Promise<void> {
+  const { scene, handles } = world;
+
+  loadEnvironment(renderer, 'sunset_puresky_1k.hdr')
+    .then((env) => {
+      scene.environment = env;
+      (scene as THREE.Scene & { environmentIntensity: number }).environmentIntensity = 0.85;
+      invalidate();
+    })
+    .catch(() => undefined); // keep sky-gradient lighting
+
+  const graft = (mat: THREE.MeshStandardMaterial, maps: PbrMaps): void => {
+    mat.map = maps.map;
+    mat.normalMap = maps.normalMap;
+    if (maps.roughnessMap) {
+      mat.roughnessMap = maps.roughnessMap;
+      mat.roughness = 1;
+    }
+    if (maps.metalnessMap) {
+      mat.metalnessMap = maps.metalnessMap;
+      mat.metalness = 1;
+    }
+    mat.needsUpdate = true;
+  };
+
+  // concrete -> exterior shell · wood -> warm cladding · marble -> interior floor · grass -> terrain.
+  try {
+    const c = await loadPbr('concrete', 2);
+    handles.villa.shellMats.forEach((m) => graft(m, c));
+    invalidate();
+  } catch {
+    /* keep flat shell */
+  }
+  try {
+    graft(handles.villa.claddingMat, await loadPbr('wood', 3));
+    invalidate();
+  } catch {
+    /* keep flat cladding */
+  }
+  try {
+    graft(handles.villa.floorMat, await loadPbr('marble', 2));
+    invalidate();
+  } catch {
+    /* keep flat floor */
+  }
+  try {
+    graft(handles.terrainMat, await loadPbr('grass', 24));
+    handles.terrainMat.flatShading = false;
+    handles.terrainMat.needsUpdate = true;
+    invalidate();
+  } catch {
+    /* keep flat terrain */
+  }
+
+  // Real CC0 furniture GLBs (glTF) into the interior via the loader seam — proves real models load;
+  // scene.environment lights them automatically. Falls back to the procedural boxes if any fails.
+  try {
+    const loader = createModelLoader(renderer);
+    const [sofa, table, chair] = await Promise.all([
+      loadModel(loader, 'sofa/model.gltf'),
+      loadModel(loader, 'coffee_table/model.gltf'),
+      loadModel(loader, 'armchair/model.gltf'),
+    ]);
+    const place = (obj: THREE.Object3D, x: number, z: number, ry: number, s: number): void => {
+      obj.position.set(x, 0.46, z);
+      obj.rotation.y = ry;
+      obj.scale.setScalar(s);
+      obj.traverse((n) => {
+        const m = n as THREE.Mesh;
+        if (m.isMesh) {
+          m.castShadow = true;
+          m.receiveShadow = true;
+        }
+      });
+      handles.villa.interior.add(obj);
+    };
+    place(sofa.scene, -1.8, -2.1, 0, 1);
+    place(table.scene, -1.8, -0.6, 0, 1);
+    place(chair.scene, 1.7, -2.0, -Math.PI / 3, 1);
+    handles.villa.furnitureGroup.visible = false; // real furniture replaces the boxes
+    invalidate();
+  } catch {
+    /* keep the procedural furniture boxes */
+  }
 }
