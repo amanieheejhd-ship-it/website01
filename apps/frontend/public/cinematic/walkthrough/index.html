@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fardeen — Walkthrough scrubber (mechanism proof)</title>
+<style>
+  :root { --ink:#0a0a0a; --fg:#f5f5f4; --muted:#9aa0a6; --gold:#c8a15a; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--ink); color:var(--fg);
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  /* Tall scroll track drives the scrub. Height = frames * per-frame scroll. */
+  #track { position: relative; }
+  /* The canvas is pinned full-viewport; scrolling the track scrubs the frames. */
+  #stage { position: sticky; top:0; height:100vh; width:100%; overflow:hidden; background:#000; }
+  canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  /* Tasteful loader */
+  #loader { position:fixed; inset:0; display:grid; place-items:center; background:var(--ink); z-index:5;
+    transition: opacity .6s ease; }
+  #loader .inner { text-align:center; }
+  #loader .word { font-family:Georgia,serif; letter-spacing:.34em; text-transform:uppercase;
+    font-size:.72rem; color:var(--gold); }
+  #loader .bar { width:220px; height:2px; background:rgba(255,255,255,.12); margin:18px auto 0; overflow:hidden; }
+  #loader .bar i { display:block; height:100%; width:0; background:var(--gold); transition:width .15s linear; }
+  #loader .pct { margin-top:12px; font-size:.8rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+  #loader.hide { opacity:0; pointer-events:none; }
+  /* HUD */
+  #hud { position:fixed; left:16px; bottom:14px; z-index:4; font-size:.72rem; color:var(--muted);
+    font-variant-numeric:tabular-nums; letter-spacing:.04em; background:rgba(0,0,0,.4);
+    padding:6px 10px; border:1px solid rgba(255,255,255,.1); border-radius:8px; }
+  #hud b { color:var(--fg); }
+  .cap { position:fixed; right:18px; bottom:16px; z-index:4; font-family:Georgia,serif;
+    font-size:.8rem; color:var(--muted); max-width:42ch; text-align:right; }
+  @media (prefers-reduced-motion: reduce) { /* still works; no auto-motion here — scrub is user-driven */ }
+</style>
+</head>
+<body>
+  <div id="loader"><div class="inner">
+    <div class="word">Fardeen · Walkthrough</div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="pct" id="pct">preparing 0%</div>
+  </div></div>
+
+  <div id="track">
+    <div id="stage"><canvas id="c"></canvas></div>
+  </div>
+
+  <div id="hud">frame <b id="fi">0</b>/<span id="fn">0</span> · scrub <b id="fps">–</b> fps</div>
+  <div class="cap">Scroll-scrubbed frame sequence. Drop your photoreal render's frames into <code>/frames</code>.</div>
+
+<script>
+(() => {
+  const N = 48;                       // frame count
+  const PER = 60;                     // vh of scroll per frame (controls scrub length/feel)
+  const BASE = 'frames/frame_';
+  const pad = (n) => String(n).padStart(3, '0');
+
+  const cvs = document.getElementById('c');
+  const ctx = cvs.getContext('2d', { alpha: false });
+  const track = document.getElementById('track');
+  const loader = document.getElementById('loader');
+  const barFill = document.getElementById('barFill');
+  const pct = document.getElementById('pct');
+  const fiEl = document.getElementById('fi'), fnEl = document.getElementById('fn'), fpsEl = document.getElementById('fps');
+  fnEl.textContent = N - 1;
+
+  track.style.height = (N * PER) + 'vh';
+  const frames = new Array(N);
+  let loaded = 0;
+
+  function fit() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cvs.width = Math.round(innerWidth * dpr);
+    cvs.height = Math.round(innerHeight * dpr);
+  }
+  // cover-fit draw
+  function draw(idx) {
+    const img = frames[idx];
+    if (!img) return;
+    const cw = cvs.width, ch = cvs.height, iw = img.naturalWidth, ih = img.naturalHeight;
+    const s = Math.max(cw / iw, ch / ih);
+    const w = iw * s, h = ih * s;
+    ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+  }
+
+  let cur = -1, samples = [], last = performance.now();
+  function render() {
+    const max = track.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+    const idx = Math.min(N - 1, Math.round(p * (N - 1)));
+    if (idx !== cur) {
+      cur = idx; draw(idx); fiEl.textContent = idx;
+      const now = performance.now(), dt = now - last; last = now;
+      if (dt > 0 && dt < 1000) { samples.push(1000 / dt); if (samples.length > 20) samples.shift();
+        fpsEl.textContent = Math.round(samples.reduce((a, b) => a + b, 0) / samples.length); }
+    }
+    requestAnimationFrame(render);
+  }
+
+  // Preload every frame, then reveal. LCP-safe in the real app (this loads after the interaction gate).
+  function preload() {
+    for (let i = 0; i < N; i++) {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loaded++;
+        const q = Math.round((loaded / N) * 100);
+        barFill.style.width = q + '%'; pct.textContent = 'preparing ' + q + '%';
+        if (loaded === N) { fit(); draw(0); loader.classList.add('hide'); requestAnimationFrame(render); }
+      };
+      img.src = BASE + pad(i) + '.jpg';
+      frames[i] = img;
+    }
+  }
+  addEventListener('resize', () => { fit(); draw(cur < 0 ? 0 : cur); });
+  window.__scrubReady = () => loaded === N;                 // test seam
+  window.__scrubGoto = (p) => { window.scrollTo(0, (track.scrollHeight - innerHeight) * p); }; // test seam
+  preload();
+})();
+</script>
+</body>
+</html>

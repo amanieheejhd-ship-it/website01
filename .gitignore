@@ -59,9 +59,13 @@ e2e-report/
 test-results/
 playwright-report/
 
-# Cinematic CC0 assets (binaries git-ignored; see SOURCES.md manifest)
+# Cinematic CC0 assets (binaries git-ignored; text manifests/docs tracked)
 apps/frontend/public/cinematic/**
 !apps/frontend/public/cinematic/SOURCES.md
+!apps/frontend/public/cinematic/walkthrough/
+!apps/frontend/public/cinematic/walkthrough/index.html
+!apps/frontend/public/cinematic/walkthrough/README.md
+apps/frontend/public/cinematic/walkthrough/frames/
 
 # TS build cache
 apps/frontend/tsconfig.tsbuildinfo
