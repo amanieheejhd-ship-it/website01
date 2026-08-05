@@ -129,7 +129,6 @@ export function WalkthroughScrubber({
   // Reduced-motion: a single static hero poster, no scroll track, no scrub.
   if (reducedMotion) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={framePath(basePath, 0, pad, ext)}
         alt="Fardeen villa walkthrough"
