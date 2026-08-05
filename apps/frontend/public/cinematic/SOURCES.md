@@ -18,11 +18,30 @@ All assets here are **CC0 (public domain)** from [Poly Haven](https://polyhaven.
 | `marble` | `marble_01` | interior floor |
 | `grass` | `leafy_grass` | terrain / lawn |
 
-## Models — `models/` (GLB, DRACO/KTX2/meshopt) — **loader seam**
+## Models — `models/` (glTF + .bin + textures) — **loader seam**
 Drop real/purchased GLBs here and load them via `lib/cinematic/assets.ts::loadModel()` (GLTFLoader +
-DRACO + KTX2 + meshopt). On any load failure the scene keeps its procedural geometry. No CC0
-luxury-villa GLB exists at production quality — the exterior/interior use the realistic-material
-procedural build; a specific villa model can be dropped in here without touching the engine.
+DRACO + KTX2 + meshopt). On any load failure the scene keeps its procedural geometry.
+
+### Real CC0 models sourced (Poly Haven, glTF 1K) — loaded in `enrichWorld()`
+| folder | Poly Haven asset | license | placed |
+|---|---|---|---|
+| `sofa/` | `Sofa_01` | CC0 | interior seating |
+| `coffee_table/` | `CoffeeTable_01` | CC0 | interior |
+| `armchair/` | `ArmChair_01` | CC0 | interior |
+| `rocks/` | `coast_rocks_01` | CC0 | scattered on the terrain (env props) |
+| `plant/` | `calathea_orbifolia_01` | CC0 | scattered on the terrain (env props) |
+
+### ⚠️ Villa centerpiece — **user must supply a GLB** (the one gating dependency)
+No CC0 luxury-villa / house model exists at production quality anywhere downloadable (Poly Haven has
+**no buildings** — only props, furniture, doors, windows, facades; Sketchfab CC0 requires an
+authenticated download). Poly Haven's closest architectural GLB is `modular_urban_apartments_facade`
+— a real building facade, but urban apartments, **not** a luxury villa, so it is *not* used.
+
+**To drop in your villa:** put the exported GLB at `models/villa/villa.glb`, then in
+`lib/cinematic/world.ts::enrichWorld()` load it via `loadModel(loader, 'villa/villa.glb')`, add
+`.scene` to the scene, and hide the procedural `villa.root` shell. The seam is already proven by the
+5 real GLBs above — no engine change is required, only the asset + those ~3 lines. Recommended source:
+a purchased CGTrader/TurboSquid archviz villa, or a Blender/Revit export of the actual project design.
 
 ## Follow-ups
 - **KTX2/Basis compression** of the textures (needs `toktx`/`gltf-transform`, not installed here) would

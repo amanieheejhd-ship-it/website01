@@ -614,4 +614,48 @@ export async function enrichWorld(
   } catch {
     /* keep the procedural furniture boxes */
   }
+
+  // Real CC0 environment GLBs (Poly Haven rocks + plant) scattered around the plot through the same
+  // seam — photoreal props on the terrain, lit by the HDRI, casting sun shadows. Cloned (not GPU-
+  // instanced) because each glTF carries its own meshes/materials; a dozen clones is cheap. Placed on
+  // a golden-angle ring outside the villa footprint (radius > 6) so nothing intersects the building.
+  try {
+    const loader = createModelLoader(renderer);
+    const [rocks, plant] = await Promise.all([
+      loadModel(loader, 'rocks/model.gltf'),
+      loadModel(loader, 'plant/model.gltf'),
+    ]);
+    const shade = (o: THREE.Object3D): void =>
+      o.traverse((n) => {
+        const m = n as THREE.Mesh;
+        if (m.isMesh) {
+          m.castShadow = true;
+          m.receiveShadow = true;
+        }
+      });
+    shade(rocks.scene);
+    shade(plant.scene);
+    const scatter = new THREE.Group();
+    // The CC0 rock cluster is photogrammetry-grade (~680k tris each) so it is used sparingly — 2 hero
+    // clusters at the far edge. The plant is light (~17k tris) so it carries the greenery density.
+    // (No decimation tooling here; see SOURCES.md — decimated rocks would allow many more.)
+    const defs: { src: THREE.Object3D; base: number }[] = [
+      { src: rocks.scene, base: 0.65 },
+      { src: rocks.scene, base: 0.8 },
+      ...Array.from({ length: 8 }, () => ({ src: plant.scene, base: 1.0 })),
+    ];
+    defs.forEach((d, i) => {
+      const ang = i * 2.399963; // golden angle
+      const rad = 8 + (i % 5) * 2.8; // 8..19m ring, clear of the 8.6m slab
+      const obj = d.src.clone(true);
+      obj.position.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+      obj.rotation.y = i * 1.7;
+      obj.scale.setScalar(d.base + (Math.sin(i * 7.7) * 0.5 + 0.5) * 0.4);
+      scatter.add(obj);
+    });
+    scene.add(scatter);
+    invalidate();
+  } catch {
+    /* no environment props — terrain + grass carry the ground on their own */
+  }
 }
