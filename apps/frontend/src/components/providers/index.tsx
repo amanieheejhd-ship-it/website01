@@ -4,6 +4,7 @@ import { domAnimation, LazyMotion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { QueryProvider } from './query-provider';
 import { ThemeProvider } from './theme-provider';
+import { CustomCursor } from '../interactive/custom-cursor';
 
 /**
  * Root client-provider stack mounted once in the app layout. LazyMotion loads only the
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider>
       <QueryProvider>
         <LazyMotion features={domAnimation} strict>
+          <CustomCursor />
           {children}
         </LazyMotion>
       </QueryProvider>

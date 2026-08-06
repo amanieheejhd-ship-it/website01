@@ -1,5 +1,6 @@
 import { buttonVariants, Container, Eyebrow, Heading, Lead } from '@fardeen/ui';
 import Link from 'next/link';
+import { HeroTools } from '../interactive/hero-tools';
 
 /**
  * Fold-safe static hero. Fully readable without JS/WebGL. The `data-phase6-canvas-slot`
@@ -14,7 +15,9 @@ export function Hero({ headline, sub }: { headline: string; sub: string }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
       />
-      <Container size="wide" className="py-24">
+      {/* Decorative right-side construction cluster (desktop only, reduced-motion static). */}
+      <HeroTools />
+      <Container size="wide" className="relative z-10 py-24">
         <div className="max-w-3xl space-y-6">
           <Eyebrow>Full-solution construction · {`Foundation to finish`}</Eyebrow>
           <Heading as="h1" id="hero-heading" size="xl" className="text-balance">

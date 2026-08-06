@@ -50,6 +50,14 @@ body {
     background-color: rgba(200, 161, 90, 0.3);
     color: #f5f5f4;
   }
+
+  /* Hide the native cursor only while the JS custom cursor is mounted (desktop + motion allowed).
+     The class is added by <CustomCursor> and removed on cleanup, so touch / reduced-motion / no-JS
+     always keep the native cursor. */
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
 }
 
 @layer components {
