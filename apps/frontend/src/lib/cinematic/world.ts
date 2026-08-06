@@ -102,16 +102,16 @@ function buildTerrain(): { mesh: THREE.Mesh; material: THREE.MeshStandardMateria
   return { mesh: new THREE.Mesh(g, material), material };
 }
 
-function buildGrass(count = 1400, radius = 18, innerRadius = 8.5, wind = 0.18) {
-  const geo = new THREE.PlaneGeometry(0.06, 1, 1, 3);
+function buildGrass(count = 520, radius = 20, innerRadius = 10, wind = 0.025) {
+  const geo = new THREE.PlaneGeometry(0.09, 0.28, 1, 2);
   geo.translate(0, 0.5, 0);
   const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms: {
       uTime: { value: 0 },
       uWind: { value: wind },
-      uBase: { value: new THREE.Color(0x1d2a1c) },
-      uTip: { value: new THREE.Color(0x7d7a3f) },
+      uBase: { value: new THREE.Color(0x17341f) },
+      uTip: { value: new THREE.Color(0x4f7540) },
     },
     vertexShader: `
       uniform float uTime; uniform float uWind; varying float vY;
@@ -137,7 +137,7 @@ function buildGrass(count = 1400, radius = 18, innerRadius = 8.5, wind = 0.18) {
     const rad = innerRadius + Math.sqrt(t) * (radius - innerRadius);
     d.position.set(Math.cos(ang) * rad + Math.sin(i * 12.9898) * 0.5, 0, Math.sin(ang) * rad + Math.cos(i * 4.1) * 0.5);
     d.rotation.y = i * 1.7;
-    d.scale.set(1, 0.6 + (Math.sin(i * 7.7) * 0.5 + 0.5) * 0.9, 1);
+    d.scale.set(0.8 + (i % 4) * 0.08, 0.65 + (Math.sin(i * 7.7) * 0.5 + 0.5) * 0.45, 1);
     d.updateMatrix();
     mesh.setMatrixAt(i, d.matrix);
   }
@@ -275,24 +275,58 @@ function buildLandscape() {
   hedges.instanceMatrix.needsUpdate = true;
   group.add(hedges);
 
-  // Instanced trunks/crowns are intentionally stylised and LOD-friendly.
-  const trunks = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.16, 0.24, 3.5, 8),
-    new THREE.MeshStandardMaterial({ color: 0x57402d, roughness: 1 }),
-    8,
-  );
-  const crowns = new THREE.InstancedMesh(
-    new THREE.IcosahedronGeometry(1.25, 1),
-    new THREE.MeshStandardMaterial({ color: 0x183522, roughness: 0.95 }),
-    8,
-  );
-  const treePositions: [number, number][] = [[-11,-7],[-11,1],[-10,8],[11,-7],[12,5],[8,-9],[-7,-10],[13,-2]];
-  treePositions.forEach(([x, z], i) => {
-    dummy.position.set(x, 1.75, z); dummy.scale.setScalar(1); dummy.updateMatrix(); trunks.setMatrixAt(i, dummy.matrix);
-    dummy.position.set(x, 4.1, z); dummy.scale.setScalar(0.9 + (i % 3) * 0.12); dummy.updateMatrix(); crowns.setMatrixAt(i, dummy.matrix);
+  // Alpha-cutout cross-plane trees: organic silhouettes without expensive leaf geometry.
+  const foliageCanvas = document.createElement('canvas');
+  foliageCanvas.width = foliageCanvas.height = 256;
+  const foliageContext = foliageCanvas.getContext('2d');
+  if (foliageContext) {
+    foliageContext.clearRect(0, 0, 256, 256);
+    const leafGradient = foliageContext.createRadialGradient(128, 120, 12, 128, 128, 122);
+    leafGradient.addColorStop(0, 'rgba(64,105,55,0.98)');
+    leafGradient.addColorStop(0.62, 'rgba(27,67,39,0.96)');
+    leafGradient.addColorStop(1, 'rgba(9,31,20,0)');
+    foliageContext.fillStyle = leafGradient;
+    const lobes = [[128,60,48],[78,100,52],[174,104,58],[108,132,66],[154,150,58],[74,160,42],[188,166,40]];
+    for (const [x, y, radius] of lobes) {
+      foliageContext.beginPath();
+      foliageContext.arc(x, y, radius, 0, Math.PI * 2);
+      foliageContext.fill();
+    }
+  }
+  const foliageTexture = new THREE.CanvasTexture(foliageCanvas);
+  foliageTexture.colorSpace = THREE.SRGBColorSpace;
+  const foliageMaterial = new THREE.MeshStandardMaterial({
+    map: foliageTexture,
+    transparent: true,
+    alphaTest: 0.18,
+    depthWrite: true,
+    side: THREE.DoubleSide,
+    roughness: 0.88,
+    metalness: 0,
   });
-  trunks.instanceMatrix.needsUpdate = crowns.instanceMatrix.needsUpdate = true;
-  group.add(trunks, crowns);
+  const trunks = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.13, 0.23, 3.7, 7),
+    new THREE.MeshStandardMaterial({ color: 0x493321, roughness: 0.96 }),
+    11,
+  );
+  const foliage = new THREE.InstancedMesh(new THREE.PlaneGeometry(3.4, 4.1), foliageMaterial, 33);
+  const treePositions: [number, number][] = [
+    [-12,-7],[-11.2,-4.8],[-12.6,1],[-10.7,8.5],[11.2,-7.5],[12.8,5.7],[9.2,-10.2],[-7.8,-11],[13.5,-1.8],[-13,5.4],[10.5,8.8],
+  ];
+  let foliageIndex = 0;
+  treePositions.forEach(([x, z], i) => {
+    const scale = 0.82 + (i % 4) * 0.1;
+    dummy.position.set(x, 1.85 * scale, z); dummy.rotation.set(0, i * 1.73, 0); dummy.scale.set(scale, scale, scale); dummy.updateMatrix(); trunks.setMatrixAt(i, dummy.matrix);
+    for (let plane = 0; plane < 3; plane += 1) {
+      dummy.position.set(x, 4.1 * scale, z);
+      dummy.rotation.set(0, i * 0.73 + plane * Math.PI / 3, 0);
+      dummy.scale.set(scale, scale, scale);
+      dummy.updateMatrix();
+      foliage.setMatrixAt(foliageIndex++, dummy.matrix);
+    }
+  });
+  trunks.instanceMatrix.needsUpdate = foliage.instanceMatrix.needsUpdate = true;
+  group.add(trunks, foliage);
 
   const lampMat = new THREE.MeshStandardMaterial({ color: 0x211b13, emissive: 0xffb45e, emissiveIntensity: 3 });
   for (let i = 0; i < 8; i++) {
