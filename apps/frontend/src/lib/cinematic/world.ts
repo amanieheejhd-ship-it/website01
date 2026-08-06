@@ -16,7 +16,12 @@ export interface WorldHandles {
     sun: THREE.DirectionalLight;
     ambient: THREE.AmbientLight;
   };
-  site: { developed: THREE.Group };
+  site: {
+    developed: THREE.Group;
+    pavingMat: THREE.MeshStandardMaterial;
+    lawnMat: THREE.MeshStandardMaterial;
+    waterNormal: THREE.Texture;
+  };
   villa: {
     slab: THREE.Group;
     rebar: THREE.Group;
@@ -245,12 +250,40 @@ function buildLandscape() {
     transmission: 0.42,
     transparent: true,
     opacity: 0.86,
+    clearcoat: 1,
+    clearcoatRoughness: 0.05,
+    ior: 1.333,
+    thickness: 0.35,
   });
+  const normalData = new Uint8Array(128 * 128 * 4);
+  for (let y = 0; y < 128; y += 1) for (let x = 0; x < 128; x += 1) {
+    const offset = (y * 128 + x) * 4;
+    normalData[offset] = 128 + Math.round(Math.sin(x * 0.23 + y * 0.11) * 18);
+    normalData[offset + 1] = 128 + Math.round(Math.cos(y * 0.19 - x * 0.07) * 18);
+    normalData[offset + 2] = 245;
+    normalData[offset + 3] = 255;
+  }
+  const waterNormal = new THREE.DataTexture(normalData, 128, 128, THREE.RGBAFormat);
+  waterNormal.wrapS = waterNormal.wrapT = THREE.RepeatWrapping;
+  waterNormal.repeat.set(5, 2);
+  waterNormal.needsUpdate = true;
+  water.normalMap = waterNormal;
+  water.normalScale.set(0.22, 0.22);
   box(group, [30, 0.08, 25], [0, 0.02, 0], lawn);
   box(group, [5.5, 0.11, 15], [0, 0.09, 8], stone); // driveway
   box(group, [1.4, 0.12, 7], [-4.8, 0.1, 7], stone); // pedestrian path
-  box(group, [7.5, 0.18, 3.5], [8.1, 0.08, -1.6], stone);
-  box(group, [6.8, 0.08, 2.8], [8.1, 0.18, -1.6], water); // pool
+  box(group, [7.8, 0.18, 3.8], [8.1, 0.08, -1.6], stone);
+  box(group, [6.9, 0.12, 2.9], [8.1, 0.14, -1.6], new THREE.MeshStandardMaterial({ color: 0x315c66, roughness: 0.58 }));
+  const waterSurface = new THREE.Mesh(new THREE.PlaneGeometry(6.75, 2.75, 1, 1), water);
+  waterSurface.rotation.x = -Math.PI / 2;
+  waterSurface.position.set(8.1, 0.245, -1.6);
+  group.add(waterSurface);
+  for (const [size, position] of [
+    [[7.4,.12,.2],[8.1,.27,-3.1]], [[7.4,.12,.2],[8.1,.27,-.1]],
+    [[.2,.12,3.2],[4.5,.27,-1.6]], [[.2,.12,3.2],[11.7,.27,-1.6]],
+  ] as const) box(group, [...size], [...position], stone);
+  const poolLight = new THREE.MeshStandardMaterial({ color: 0x8ad9e8, emissive: 0x73dfff, emissiveIntensity: 2.2 });
+  for (const x of [6.1, 8.1, 10.1]) box(group, [.22,.08,.1], [x,.2,-3.02], poolLight);
 
   // Low boundary wall leaves the gate/drive axis open.
   for (const [s, p] of [
@@ -328,6 +361,31 @@ function buildLandscape() {
   trunks.instanceMatrix.needsUpdate = foliage.instanceMatrix.needsUpdate = true;
   group.add(trunks, foliage);
 
+  // Three low-detail LOD villas beyond the hero plot make the composition read as a gated estate.
+  const estateStone = new THREE.MeshStandardMaterial({ color: 0x8b8171, roughness: 0.76 });
+  const estateGlass = new THREE.MeshPhysicalMaterial({ color: 0x52666a, roughness: 0.12, metalness: 0.12, transmission: 0.45, transparent: true, opacity: 0.8 });
+  const estateGlow = new THREE.MeshStandardMaterial({ color: 0x2a1b10, emissive: 0xffbd70, emissiveIntensity: 0.85 });
+  const buildEstateVilla = (x: number, z: number, rotation: number, scale: number) => {
+    const lod = new THREE.LOD();
+    const near = new THREE.Group();
+    box(near, [8,3.2,5.5], [0,1.6,0], estateStone);
+    box(near, [5.4,2.7,4.2], [-.8,4.55,-.45], estateStone);
+    box(near, [3.8,2.1,.08], [1.3,2.1,2.78], estateGlass);
+    box(near, [3.1,1.2,.06], [-1.7,4.55,1.68], estateGlow);
+    const far = new THREE.Group();
+    box(far, [8,5.7,5.4], [0,2.85,0], estateStone);
+    box(far, [3.6,1.3,.05], [.8,3,2.73], estateGlow);
+    lod.addLevel(near, 0);
+    lod.addLevel(far, 28);
+    lod.position.set(x, 0, z);
+    lod.rotation.y = rotation;
+    lod.scale.setScalar(scale);
+    group.add(lod);
+  };
+  buildEstateVilla(-18, -24, 0.24, 0.88);
+  buildEstateVilla(17, -27, -0.28, 0.82);
+  buildEstateVilla(1, -34, 0.08, 0.76);
+
   const lampMat = new THREE.MeshStandardMaterial({ color: 0x211b13, emissive: 0xffb45e, emissiveIntensity: 3 });
   for (let i = 0; i < 8; i++) {
     const x = i < 4 ? 5.2 + i * 2 : -5 + (i - 4) * 1.6;
@@ -335,7 +393,7 @@ function buildLandscape() {
     cylinder(group, 0.07, 0.55, [x, 0.34, z], metal);
     box(group, [0.18, 0.15, 0.18], [x, 0.68, z], lampMat);
   }
-  return group;
+  return { group, pavingMat: stone, lawnMat: lawn, waterNormal };
 }
 
 function buildGate() {
@@ -626,8 +684,8 @@ export function createWorld(): World {
   scene.add(terrain.mesh);
 
   const landscape = buildLandscape();
-  landscape.visible = false;
-  scene.add(landscape);
+  landscape.group.visible = false;
+  scene.add(landscape.group);
 
   const grass = buildGrass();
   scene.add(grass.group);
@@ -657,7 +715,12 @@ export function createWorld(): World {
 
   const handles: WorldHandles = {
     env: { skyMat, fog, sun, ambient },
-    site: { developed: landscape },
+    site: {
+      developed: landscape.group,
+      pavingMat: landscape.pavingMat,
+      lawnMat: landscape.lawnMat,
+      waterNormal: landscape.waterNormal,
+    },
     villa: {
       slab: villa.slab,
       rebar: villa.rebar,
@@ -687,6 +750,7 @@ export function createWorld(): World {
     grass.material.uniforms.uTime.value = elapsed;
     birds.material.uniforms.uTime.value = elapsed;
     birds.flock.rotation.y = elapsed * 0.02;
+    handles.site.waterNormal.offset.set(elapsed * 0.018, elapsed * 0.01);
   };
 
   const dispose = () => {
@@ -760,11 +824,18 @@ export async function enrichWorld(
   }
   try {
     graft(handles.terrainMat, await loadPbr('grass', 24));
+    graft(handles.site.lawnMat, await loadPbr('grass', 18));
     handles.terrainMat.flatShading = false;
     handles.terrainMat.needsUpdate = true;
     invalidate();
   } catch {
     /* keep flat terrain */
+  }
+  try {
+    graft(handles.site.pavingMat, await loadPbr('concrete', 8));
+    invalidate();
+  } catch {
+    /* keep flat paving */
   }
 
   // Real CC0 furniture GLBs (glTF) into the interior via the loader seam — proves real models load;
