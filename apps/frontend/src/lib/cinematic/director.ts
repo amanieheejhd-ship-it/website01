@@ -25,7 +25,7 @@ export function createDirector(opts: {
   invalidate: () => void;
 }): { seek: (p: number) => void; dispose: () => void } {
   const { camera, handles, lookTarget, spacer, copyEls, invalidate } = opts;
-  const { env, villa } = handles;
+  const { env, villa, site } = handles;
 
   // Initial camera + look target + palette (dawn).
   camera.position.set(OPENING_CAMERA.pos.x, OPENING_CAMERA.pos.y, OPENING_CAMERA.pos.z);
@@ -35,6 +35,22 @@ export function createDirector(opts: {
   env.fog.color.set(PALETTE.fog[0]);
   env.sun.color.set(PALETTE.light[0]);
   env.ambient.color.set(PALETTE.light[0]);
+  // Canonical progress-zero state. This is deliberately explicit so async PBR/model enrichment can
+  // never flash a finished building before ScrollTrigger owns the scene.
+  villa.slab.scale.y = 0;
+  villa.slab.visible = false;
+  villa.rebar.scale.y = 0;
+  villa.rebar.visible = false;
+  villa.walls.forEach((wall) => { wall.scale.y = 0; wall.visible = false; });
+  villa.columns.forEach((column) => { column.scale.y = 0; column.visible = false; });
+  villa.upper.scale.y = 0;
+  villa.upper.visible = false;
+  villa.roof.visible = false;
+  villa.finishes.visible = false;
+  villa.windowMesh.visible = false;
+  villa.interior.visible = false;
+  handles.gate.group.visible = false;
+  site.developed.visible = false;
   gsap.set(copyEls, { autoAlpha: 0, y: 16 });
 
   let master: gsap.core.Timeline | null = null;
@@ -72,28 +88,36 @@ export function createDirector(opts: {
     tl.to(handles.terrainMat.color, { ...rgb(0x2e2a1e), duration: 3 }, 2);
 
     // Scene 2 [1,2]: foundation pour + rebar.
+    tl.set(villa.slab, { visible: true }, 1.04);
     tl.fromTo(villa.slab.scale, { y: 0 }, { y: 1, duration: 0.5, ease: 'power2.out' }, 1.05);
+    tl.set(villa.rebar, { visible: true }, 1.39);
     tl.fromTo(villa.rebar.scale, { y: 0 }, { y: 1, duration: 0.5, ease: 'back.out(2)' }, 1.4);
 
     // Scene 3 [2,3]: structure rises.
     villa.columns.forEach((c, i) => {
+      tl.set(c, { visible: true }, 2.04 + i * 0.06);
       tl.to(c.scale, { y: 1, duration: 0.45, ease: 'back.out(1.6)' }, 2.05 + i * 0.06);
     });
     villa.walls.forEach((w, i) => {
+      tl.set(w, { visible: true }, 2.14 + i * 0.07);
       tl.to(w.scale, { y: 1, duration: 0.5, ease: 'elastic.out(1,0.65)' }, 2.15 + i * 0.07);
     });
+    tl.set(villa.upper, { visible: true }, 2.54);
     tl.to(villa.upper.scale, { y: 1, duration: 0.5, ease: 'power3.out' }, 2.55);
     tl.set(villa.roof, { visible: true }, 2.55);
-    tl.fromTo(villa.roof.position, { y: 10.5 }, { y: 6.1, duration: 0.4, ease: 'bounce.out' }, 2.6);
+    tl.fromTo(villa.roof.position, { y: 10.5 }, { y: 6.45, duration: 0.4, ease: 'bounce.out' }, 2.6);
 
     // Scene 4 [3,4]: shell → villa (warm tint + cladding + glass + emissive windows).
     villa.shellMats.forEach((m) => {
       tl.to(m.color, { r: WARM_STONE.r, g: WARM_STONE.g, b: WARM_STONE.b, duration: 0.7 }, 3.05);
     });
-    tl.set(villa.windowMesh, { visible: true }, 3.0);
+    tl.set(villa.finishes, { visible: true }, 3.0);
+    tl.set(villa.windowMesh, { visible: true }, 3.12);
     tl.to(villa.claddingMat, { opacity: 1, duration: 0.6 }, 3.1);
     tl.to(villa.glassMat, { opacity: 0.9, duration: 0.6 }, 3.2);
-    tl.to(villa.windowMat, { emissiveIntensity: 1.4, duration: 0.7 }, 3.25);
+    tl.to(villa.windowMat, { emissiveIntensity: 0.8, duration: 0.7 }, 3.25);
+    tl.set(villa.rebar, { visible: false }, 3.75);
+    tl.set(site.developed, { visible: true }, 3.45);
 
     // Scene 5 [4,5]: gate appears + opens.
     tl.set(handles.gate.group, { visible: true }, 4.0);
@@ -102,15 +126,21 @@ export function createDirector(opts: {
 
     // Scenes 6–9 [5,9]: interior warms.
     tl.set(villa.interior, { visible: true }, 5.0);
-    tl.to(villa.interiorLight, { intensity: 2.4, duration: 0.5 }, 5.1);
-    tl.to(villa.windowMat, { emissiveIntensity: 1.8, duration: 1 }, 5.5);
+    tl.to(villa.interiorLight, { intensity: 1.35, duration: 0.5 }, 5.1);
+    tl.to(villa.windowMat, { emissiveIntensity: 1.05, duration: 1 }, 5.5);
+    const roomOrder = [villa.rooms.living, villa.rooms.kitchen, villa.rooms.bedroom, villa.rooms.bathroom];
+    roomOrder.forEach((room) => tl.set(room, { visible: false }, 5));
+    roomOrder.forEach((room, i) => {
+      tl.set(room, { visible: true }, 5 + i);
+      if (i > 0) tl.set(roomOrder[i - 1], { visible: false }, 5 + i);
+    });
 
     // Scene 10 [9,10]: leave interior.
     tl.to(villa.interiorLight, { intensity: 0.5, duration: 0.5 }, 9.1);
     tl.set(villa.interior, { visible: false }, 9.7);
 
     // Scene 11 [10,11]: full glow reveal.
-    tl.to(villa.windowMat, { emissiveIntensity: 2.6, duration: 0.8 }, 10.15);
+    tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 10.15);
 
     // Copy overlay: fade each scene label in over its window, out near the end.
     SCENES.forEach((s, idx) => {

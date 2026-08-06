@@ -28,8 +28,15 @@ DRACO + KTX2 + meshopt). On any load failure the scene keeps its procedural geom
 | `sofa/` | `Sofa_01` | CC0 | interior seating |
 | `coffee_table/` | `CoffeeTable_01` | CC0 | interior |
 | `armchair/` | `ArmChair_01` | CC0 | interior |
-| `rocks/` | `coast_rocks_01` | CC0 | scattered on the terrain (env props) |
-| `plant/` | `calathea_orbifolia_01` | CC0 | scattered on the terrain (env props) |
+| `rocks/` | `coast_rocks_01` | CC0 | available through the loader seam; not placed in the clean estate landscape |
+| `plant/` | `calathea_orbifolia_01` | CC0 | available through the loader seam; not placed in the clean estate landscape |
+
+## Procedural, dependency-free landscape details
+
+The lawn blades, clustered alpha-cutout tree impostors, pool ripple normal map, paving variation, and
+distant-villa LOD shells are generated at runtime in `lib/cinematic/world.ts`. They add no binary asset
+weight and preserve the LOW quality tier. Tree impostors are instanced cross-planes with an asymmetric
+painted canopy mask rather than sphere geometry; pool normals are a small generated `DataTexture`.
 
 ### ⚠️ Villa centerpiece — **user must supply a GLB** (the one gating dependency)
 No CC0 luxury-villa / house model exists at production quality anywhere downloadable (Poly Haven has

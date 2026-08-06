@@ -108,8 +108,12 @@ function buildTerrain(): { mesh: THREE.Mesh; material: THREE.MeshStandardMateria
 }
 
 function buildGrass(count = 520, radius = 20, innerRadius = 10, wind = 0.025) {
-  const geo = new THREE.PlaneGeometry(0.09, 0.28, 1, 2);
-  geo.translate(0, 0.5, 0);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute([
+    -0.045, 0, 0,
+    0.045, 0, 0,
+    0, 0.28, 0,
+  ], 3));
   const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms: {
@@ -314,13 +318,22 @@ function buildLandscape() {
   const foliageContext = foliageCanvas.getContext('2d');
   if (foliageContext) {
     foliageContext.clearRect(0, 0, 256, 256);
-    const leafGradient = foliageContext.createRadialGradient(128, 120, 12, 128, 128, 122);
-    leafGradient.addColorStop(0, 'rgba(64,105,55,0.98)');
-    leafGradient.addColorStop(0.62, 'rgba(27,67,39,0.96)');
-    leafGradient.addColorStop(1, 'rgba(9,31,20,0)');
-    foliageContext.fillStyle = leafGradient;
-    const lobes = [[128,60,48],[78,100,52],[174,104,58],[108,132,66],[154,150,58],[74,160,42],[188,166,40]];
+    foliageContext.strokeStyle = 'rgba(72,48,28,.9)';
+    foliageContext.lineCap = 'round';
+    foliageContext.lineWidth = 10;
+    foliageContext.beginPath();
+    foliageContext.moveTo(128, 252); foliageContext.lineTo(126, 105);
+    foliageContext.moveTo(126, 150); foliageContext.lineTo(72, 92);
+    foliageContext.moveTo(128, 132); foliageContext.lineTo(178, 70);
+    foliageContext.moveTo(126, 105); foliageContext.lineTo(118, 38);
+    foliageContext.stroke();
+    const lobes = [[118,32,28],[86,55,34],[150,58,38],[62,92,42],[111,91,48],[178,98,42],[84,132,47],[145,135,53],[194,142,34],[105,178,48],[160,184,42],[127,213,32]];
     for (const [x, y, radius] of lobes) {
+      const leafGradient = foliageContext.createRadialGradient(x - radius * .18, y - radius * .2, 2, x, y, radius);
+      leafGradient.addColorStop(0, 'rgba(79,122,65,0.98)');
+      leafGradient.addColorStop(0.58, 'rgba(29,72,41,0.96)');
+      leafGradient.addColorStop(1, 'rgba(8,29,18,0)');
+      foliageContext.fillStyle = leafGradient;
       foliageContext.beginPath();
       foliageContext.arc(x, y, radius, 0, Math.PI * 2);
       foliageContext.fill();
@@ -356,9 +369,11 @@ function buildLandscape() {
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
       foliage.setMatrixAt(foliageIndex++, dummy.matrix);
+      foliage.setColorAt(foliageIndex - 1, new THREE.Color(i % 3 === 0 ? 0x78906a : i % 3 === 1 ? 0x607c57 : 0x87966d));
     }
   });
   trunks.instanceMatrix.needsUpdate = foliage.instanceMatrix.needsUpdate = true;
+  if (foliage.instanceColor) foliage.instanceColor.needsUpdate = true;
   group.add(trunks, foliage);
 
   // Three low-detail LOD villas beyond the hero plot make the composition read as a gated estate.
