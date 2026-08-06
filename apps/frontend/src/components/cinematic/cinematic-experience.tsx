@@ -58,11 +58,13 @@ export default function CinematicExperience() {
 
     // ---- demand render loop (one frame per scrub tick) ----
     const clock = new THREE.Clock();
-    let frames = 0;
-    let lastFps = performance.now();
+    let sampledFrames = 0;
+    let renderCostMs = 0;
     let fps = 0;
     let renderReq = false;
     let disposed = false;
+    let inViewport = false;
+    let tabVisible = !document.hidden;
     let pipeline: Pipeline | null = null;
     const win = window as unknown as {
       __fardeenPerf?: unknown;
@@ -74,13 +76,14 @@ export default function CinematicExperience() {
       if (!pipeline) return;
       world.updateAmbient(clock.getElapsedTime());
       world.camera.lookAt(lookTarget);
+      const renderStarted = performance.now();
       pipeline.render(); // ACES + IBL + SSAO/bloom/vignette (or direct render when degraded)
-      frames += 1;
-      const now = performance.now();
-      if (now - lastFps >= 500) {
-        fps = Math.round((frames * 1000) / (now - lastFps));
-        frames = 0;
-        lastFps = now;
+      renderCostMs += performance.now() - renderStarted;
+      sampledFrames += 1;
+      if (sampledFrames >= 30) {
+        fps = Math.round(1000 / Math.max(1, renderCostMs / sampledFrames));
+        sampledFrames = 0;
+        renderCostMs = 0;
         pipeline.adapt(fps); // drop a quality tier on sustained low fps rather than freeze
         win.__fardeenPerf = {
           dpr: renderer.getPixelRatio(),
@@ -92,7 +95,7 @@ export default function CinematicExperience() {
       }
     };
     const invalidate = () => {
-      if (!renderReq) {
+      if (inViewport && tabVisible && !renderReq) {
         renderReq = true;
         requestAnimationFrame(render);
       }
@@ -132,6 +135,20 @@ export default function CinematicExperience() {
     void enrichWorld(world, renderer, invalidate).finally(() => {
       if (!disposed) setLoading(false);
     });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inViewport = entry.isIntersecting;
+        if (inViewport) invalidate();
+      },
+      { rootMargin: '200px 0px' },
+    );
+    observer.observe(spacer);
+    const onVisibilityChange = () => {
+      tabVisible = !document.hidden;
+      if (tabVisible) invalidate();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     // ---- Lenis (sole scroll authority) → single gsap.ticker → ScrollTrigger ----
     const lenis = new Lenis({
@@ -173,6 +190,8 @@ export default function CinematicExperience() {
       disposed = true;
       delete win.__fardeenSeek;
       delete win.__fardeenBenchmark;
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('resize', onResize);
       director.dispose();
       pipeline.dispose();
