@@ -6,6 +6,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { VignetteShader } from 'three/examples/jsm/shaders/VignetteShader.js';
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 
 /**
  * Photoreal post-processing pipeline + adaptive quality (weak-machine safe).
@@ -50,6 +51,13 @@ export function createPipeline(
   const bloom = new UnrealBloomPass(size.clone(), 0.5, 0.6, 0.9); // strength, radius, threshold (bright windows only)
   composer.addPass(bloom);
 
+  const dof = new BokehPass(scene, camera, {
+    focus: 14,
+    aperture: 0.000012,
+    maxblur: 0.003,
+  });
+  composer.addPass(dof);
+
   composer.addPass(new OutputPass()); // ACES filmic (from renderer.toneMapping) + sRGB
 
   const vignette = new ShaderPass(VignetteShader);
@@ -57,13 +65,18 @@ export function createPipeline(
   vignette.uniforms.darkness.value = 1.15;
   composer.addPass(vignette);
 
-  let tier = 0;
+  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+  const cores = navigator.hardwareConcurrency || 8;
+  const gpu = renderer.getContext().getParameter(renderer.getContext().RENDERER) as string;
+  const softwareGpu = /swiftshader|llvmpipe|software/i.test(gpu);
+  let tier = softwareGpu || memory <= 4 || cores <= 4 ? 2 : memory <= 6 || cores <= 6 ? 1 : 0;
   let usePost = true;
   let lowStreak = 0;
   const baseDpr = renderer.getPixelRatio();
 
   const applyTier = (): void => {
     ssao.enabled = tier < 1;
+    dof.enabled = tier < 1;
     usePost = tier < 2;
     renderer.shadowMap.enabled = tier < 2;
     if (tier >= 2 && renderer.getPixelRatio() !== 1) {
@@ -74,6 +87,7 @@ export function createPipeline(
     renderer.shadowMap.needsUpdate = true;
     invalidate();
   };
+  applyTier();
 
   return {
     render: () => {

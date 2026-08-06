@@ -3,7 +3,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { createDirector } from '../../lib/cinematic/director';
 import { createPipeline, type Pipeline } from '../../lib/cinematic/pipeline';
@@ -21,6 +21,7 @@ export default function CinematicExperience() {
   const spacerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,9 +40,10 @@ export default function CinematicExperience() {
       powerPreference: 'high-performance',
       alpha: false,
     });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); // DPR capped at 2
+    renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 1.08;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -60,8 +62,13 @@ export default function CinematicExperience() {
     let lastFps = performance.now();
     let fps = 0;
     let renderReq = false;
+    let disposed = false;
     let pipeline: Pipeline | null = null;
-    const win = window as unknown as { __fardeenPerf?: unknown; __fardeenSeek?: (p: number) => void };
+    const win = window as unknown as {
+      __fardeenPerf?: unknown;
+      __fardeenSeek?: (p: number) => void;
+      __fardeenBenchmark?: (durationMs?: number) => Promise<unknown>;
+    };
     const render = () => {
       renderReq = false;
       if (!pipeline) return;
@@ -92,7 +99,39 @@ export default function CinematicExperience() {
     };
 
     pipeline = createPipeline(renderer, world.scene, world.camera, invalidate);
-    void enrichWorld(world, renderer, invalidate); // async: HDRI IBL + real PBR textures (never blocks LCP)
+    win.__fardeenBenchmark = (durationMs = 1500) => {
+      // Exercise the exact weak-device fallback before sampling. Production reaches this tier after
+      // three sustained low-FPS windows; the verification seam compresses those windows.
+      for (let i = 0; i < 6; i += 1) pipeline?.adapt(1);
+      return new Promise((resolve) => {
+        const started = performance.now();
+        let sampledFrames = 0;
+        const sample = () => {
+          world.updateAmbient(clock.getElapsedTime());
+          world.camera.lookAt(lookTarget);
+          pipeline?.render();
+          sampledFrames += 1;
+          const elapsed = performance.now() - started;
+          if (elapsed < durationMs) requestAnimationFrame(sample);
+          else {
+            const result = {
+              fps: Math.round((sampledFrames * 1000) / elapsed),
+              dpr: renderer.getPixelRatio(),
+              drawCalls: renderer.info.render.calls,
+              triangles: renderer.info.render.triangles,
+              tier: pipeline?.tier() ?? 0,
+              sampleMs: Math.round(elapsed),
+            };
+            win.__fardeenPerf = result;
+            resolve(result);
+          }
+        };
+        requestAnimationFrame(sample);
+      });
+    };
+    void enrichWorld(world, renderer, invalidate).finally(() => {
+      if (!disposed) setLoading(false);
+    });
 
     // ---- Lenis (sole scroll authority) → single gsap.ticker → ScrollTrigger ----
     const lenis = new Lenis({
@@ -131,7 +170,9 @@ export default function CinematicExperience() {
     invalidate();
 
     return () => {
+      disposed = true;
       delete win.__fardeenSeek;
+      delete win.__fardeenBenchmark;
       window.removeEventListener('resize', onResize);
       director.dispose();
       pipeline.dispose();
@@ -154,6 +195,14 @@ export default function CinematicExperience() {
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" />
+        <div
+          className={`pointer-events-none absolute inset-0 z-10 grid place-items-center bg-background/70 transition-opacity duration-500 ${loading ? 'opacity-100' : 'opacity-0'}`}
+          aria-hidden="true"
+        >
+          <span className="font-display text-xs uppercase tracking-[0.32em] text-gold/80">
+            Preparing the estate
+          </span>
+        </div>
 
         {/* Copy overlay — GSAP tweens these per scene; static in the DOM, decorative for AT. */}
         <div ref={copyRef} className="pointer-events-none absolute inset-0">
