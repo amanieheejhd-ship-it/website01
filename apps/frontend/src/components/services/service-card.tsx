@@ -3,7 +3,7 @@ import { Badge, Card, CardBody, CardMeta, CardTitle } from '@fardeen/ui';
 
 export function ServiceCard({ offering }: { offering: ServiceOfferingDto }) {
   return (
-    <Card id={offering.slug} interactive className="h-full scroll-mt-24">
+    <Card id={offering.slug} data-premium-card interactive className="h-full scroll-mt-24">
       <CardBody className="flex h-full flex-col gap-3">
         <div className="flex items-center justify-between">
           <span aria-hidden="true" className="font-display text-2xl text-gold/70">

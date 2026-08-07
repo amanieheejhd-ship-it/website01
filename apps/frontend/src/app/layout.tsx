@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { JsonLd } from '../components/seo/json-ld';
 import { Providers } from '../components/providers';
+import { ParticleField } from '../components/interactive/particle-field';
 import { organizationJsonLd, websiteJsonLd } from '../lib/seo';
 import { SITE } from '../lib/site';
 import './globals.css';
@@ -16,11 +17,14 @@ const cormorant = Cormorant_Garamond({
   display: 'swap',
 });
 
+// Brand title reused across default/OG/Twitter — derived from the single SITE.name brand constant.
+const SITE_TITLE = `${SITE.name} — We build the moment you walk in`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: 'Fardeen — We build the moment you walk in',
-    template: '%s · Fardeen',
+    default: SITE_TITLE,
+    template: `%s · ${SITE.name}`,
   },
   description: SITE.description,
   applicationName: SITE.name,
@@ -33,21 +37,21 @@ export const metadata: Metadata = {
     'glass work',
     'ACP cladding',
     'steel fabrication',
-    'Fardeen',
+    SITE.name,
   ],
   authors: [{ name: SITE.legalName }],
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     siteName: SITE.name,
-    title: 'Fardeen — We build the moment you walk in',
+    title: SITE_TITLE,
     description: SITE.description,
     url: SITE.url,
     locale: 'en_IN',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Fardeen — We build the moment you walk in',
+    title: SITE_TITLE,
     description: SITE.description,
   },
   robots: { index: true, follow: true },
@@ -57,11 +61,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`dark ${inter.variable} ${cormorant.variable}`}>
       <body>
-        <a href="#main-content" className="skip-link">
-          Skip to content
-        </a>
-        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-        <Providers>{children}</Providers>
+        <ParticleField />
+        <div className="relative z-10 min-h-full">
+          <a href="#main-content" className="skip-link">
+            Skip to content
+          </a>
+          <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );

@@ -31,8 +31,8 @@ export function MagneticCard({
       style={{ x: sx, y: sy }}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
-        x.set((e.clientX - (r.left + r.width / 2)) * strength);
-        y.set((e.clientY - (r.top + r.height / 2)) * strength);
+        x.set(Math.max(-8, Math.min(8, (e.clientX - (r.left + r.width / 2)) * strength)));
+        y.set(Math.max(-8, Math.min(8, (e.clientY - (r.top + r.height / 2)) * strength)));
       }}
       onMouseLeave={() => {
         x.set(0);

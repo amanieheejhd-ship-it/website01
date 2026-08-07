@@ -13,5 +13,6 @@
     "src/hooks/**/*.ts",
     "src/lib/cinematic/scenes.ts",
     "jest.setup.ts"
-  ]
+  ],
+  "exclude": ["node_modules", "dist", ".next"]
 }

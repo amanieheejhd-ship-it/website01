@@ -83,7 +83,7 @@ export function AdminShell({ user, children }: { user: { email: string; role: Ro
       {/* Sidebar (desktop) */}
       <aside className="sticky top-0 hidden h-screen flex-col border-r border-white/10 bg-surface/50 p-4 lg:flex">
         <Link href="/admin" className="mb-6 flex items-center gap-2 px-2">
-          <span className="font-display text-lg font-medium tracking-wide text-foreground">Fardeen</span>
+          <span className="font-display text-lg font-medium tracking-wide text-foreground">Ansari Space Craft</span>
           <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-gold">Admin</span>
         </Link>
         {nav}
@@ -98,7 +98,7 @@ export function AdminShell({ user, children }: { user: { email: string; role: Ro
           <div className="absolute inset-0 bg-black/70" onClick={() => setDrawer(false)} aria-hidden="true" />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-white/10 bg-surface p-4">
             <div className="mb-6 flex items-center justify-between px-2">
-              <span className="font-display text-lg text-foreground">Fardeen Admin</span>
+              <span className="font-display text-lg text-foreground">Ansari Space Craft Admin</span>
               <button type="button" onClick={() => setDrawer(false)} aria-label="Close menu" className="rounded p-1 text-muted hover:text-foreground">✕</button>
             </div>
             {nav}
@@ -115,7 +115,7 @@ export function AdminShell({ user, children }: { user: { email: string; role: Ro
           <button type="button" onClick={() => setDrawer(true)} aria-label="Open menu" className="rounded-md border border-white/15 p-2 text-foreground">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" /></svg>
           </button>
-          <span className="font-display text-base text-foreground">Fardeen Admin</span>
+          <span className="font-display text-base text-foreground">Ansari Space Craft Admin</span>
           <span className="w-9" />
         </header>
 

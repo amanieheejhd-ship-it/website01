@@ -1,6 +1,7 @@
 import { buttonVariants, Container, Eyebrow, Heading, Lead } from '@fardeen/ui';
 import Link from 'next/link';
 import { HeroTools } from '../interactive/hero-tools';
+import { MagneticCard } from '../motion/magnetic-card';
 
 /**
  * Fold-safe static hero. Fully readable without JS/WebGL. The `data-phase6-canvas-slot`
@@ -25,12 +26,16 @@ export function Hero({ headline, sub }: { headline: string; sub: string }) {
           </Heading>
           <Lead>{sub}</Lead>
           <div className="flex flex-wrap gap-4 pt-2">
-            <Link href="/contact" className={buttonVariants({ size: 'lg' })}>
-              Start your project
-            </Link>
-            <Link href="/projects" className={buttonVariants({ size: 'lg', variant: 'outline' })}>
-              View our work
-            </Link>
+            <MagneticCard>
+              <Link href="/contact" className={`${buttonVariants({ size: 'lg' })} premium-cta`}>
+                Start your project
+              </Link>
+            </MagneticCard>
+            <MagneticCard>
+              <Link href="/projects" className={`${buttonVariants({ size: 'lg', variant: 'outline' })} premium-cta`}>
+                View our work
+              </Link>
+            </MagneticCard>
           </div>
         </div>
       </Container>

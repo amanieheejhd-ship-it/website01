@@ -31,6 +31,8 @@ export default [
       '**/.nx',
       '**/generated/**',
       '**/prisma/migrations/**',
+      '**/public/basis/**',
+      '**/public/draco/**',
     ],
   },
   {

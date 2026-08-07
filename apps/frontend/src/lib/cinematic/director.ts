@@ -49,11 +49,58 @@ export function createDirector(opts: {
   villa.finishes.visible = false;
   villa.windowMesh.visible = false;
   villa.interior.visible = false;
+  villa.furnitureGroup.visible = false;
+  Object.values(villa.rooms).forEach((room) => { room.visible = false; });
   handles.gate.group.visible = false;
   site.developed.visible = false;
   gsap.set(copyEls, { autoAlpha: 0, y: 16 });
 
   let master: gsap.core.Timeline | null = null;
+  const roomReveals: [THREE.Group, number][] = [
+    [villa.rooms.foyer, 5],
+    [villa.rooms.living, 6],
+    [villa.rooms.dining, 7],
+    [villa.rooms.kitchen, 8],
+    [villa.rooms.powder, 9],
+    [villa.rooms.stairs, 10],
+    [villa.rooms.landing, 11],
+    [villa.rooms.master, 12],
+    [villa.rooms.secondBedroom, 13],
+    [villa.rooms.masterBath, 14],
+    [villa.rooms.terrace, 15],
+  ];
+  /**
+   * Visibility is a pure function of the CURRENT timeline time. No historical latch is allowed:
+   * down-scroll reveals additively, reverse-scroll removes in the exact opposite order, and t=0
+   * always returns to terrain/grass/fog only. The exterior envelope's indoor cutaway is the sole
+   * presentation exception; completed interior objects themselves remain threshold-only.
+   */
+  const applyVisibilityAt = (timelinePosition: number): void => {
+    const indoorCutaway = timelinePosition >= 5 && timelinePosition < 15.4;
+    villa.slab.visible = timelinePosition >= 1.04;
+    // Rebar is temporary construction staging, not a completed interior/overview element. Retire it
+    // once the finishes arrive so rods cannot pierce the furnished ground floor.
+    villa.rebar.visible = timelinePosition >= 1.39 && timelinePosition < 3.75;
+    villa.columns.forEach((column, index) => {
+      column.visible = timelinePosition >= 2.04 + index * .06 && !indoorCutaway;
+    });
+    villa.walls.forEach((wall, index) => {
+      wall.visible = timelinePosition >= 2.14 + index * .07 && !indoorCutaway;
+    });
+    villa.upper.visible = timelinePosition >= 2.54 && !indoorCutaway;
+    villa.roof.visible = timelinePosition >= 2.55 && !indoorCutaway;
+    villa.finishes.visible = timelinePosition >= 3 && !indoorCutaway;
+    villa.windowMesh.visible = timelinePosition >= 3.12 && !indoorCutaway;
+    site.developed.visible = timelinePosition >= 3.45;
+    handles.gate.group.visible = timelinePosition >= 4;
+
+    const interiorVisible = timelinePosition >= 5;
+    villa.interior.visible = interiorVisible;
+    villa.furnitureGroup.visible = interiorVisible;
+    roomReveals.forEach(([room, threshold]) => {
+      room.visible = timelinePosition >= threshold;
+    });
+  };
   const ctx = gsap.context(() => {
     const tl = gsap.timeline({
       defaults: { ease: 'power1.inOut' },
@@ -63,15 +110,28 @@ export function createDirector(opts: {
         end: 'bottom bottom',
         scrub: 0.5,
         invalidateOnRefresh: true,
-        onUpdate: () => invalidate(),
+        onUpdate: invalidate,
       },
     });
     master = tl;
 
     // Camera path: OPENING → each scene keyframe over its 1-unit window.
     SCENES.forEach((s, idx) => {
-      tl.to(camera.position, { ...s.camera.pos, duration: 1, ease: s.ease }, idx);
-      tl.to(lookTarget, { ...s.camera.target, duration: 1, ease: s.ease }, idx);
+      const route = s.route;
+      if (route?.length) {
+        let previousAt = 0;
+        route.forEach((waypoint, waypointIndex) => {
+          const duration = Math.max(.001, waypoint.at - previousAt);
+          const ease = waypointIndex === route.length - 1 ? 'power1.out' : 'power1.inOut';
+          tl.to(camera.position, { ...waypoint.pos, duration, ease }, idx + previousAt);
+          tl.to(lookTarget, { ...waypoint.target, duration, ease }, idx + previousAt);
+          previousAt = waypoint.at;
+        });
+      } else {
+        // Arrive during the first part of the window, then hold a clean composed shot for its caption.
+        tl.to(camera.position, { ...s.camera.pos, duration: 0.58, ease: s.ease }, idx);
+        tl.to(lookTarget, { ...s.camera.target, duration: 0.58, ease: s.ease }, idx);
+      }
     });
 
     // Palette shifts (dawn → warm → golden → evening).
@@ -88,75 +148,64 @@ export function createDirector(opts: {
     tl.to(handles.terrainMat.color, { ...rgb(0x2e2a1e), duration: 3 }, 2);
 
     // Scene 2 [1,2]: foundation pour + rebar.
-    tl.set(villa.slab, { visible: true }, 1.04);
     tl.fromTo(villa.slab.scale, { y: 0 }, { y: 1, duration: 0.5, ease: 'power2.out' }, 1.05);
-    tl.set(villa.rebar, { visible: true }, 1.39);
     tl.fromTo(villa.rebar.scale, { y: 0 }, { y: 1, duration: 0.5, ease: 'back.out(2)' }, 1.4);
 
     // Scene 3 [2,3]: structure rises.
     villa.columns.forEach((c, i) => {
-      tl.set(c, { visible: true }, 2.04 + i * 0.06);
       tl.to(c.scale, { y: 1, duration: 0.45, ease: 'back.out(1.6)' }, 2.05 + i * 0.06);
     });
     villa.walls.forEach((w, i) => {
-      tl.set(w, { visible: true }, 2.14 + i * 0.07);
       tl.to(w.scale, { y: 1, duration: 0.5, ease: 'elastic.out(1,0.65)' }, 2.15 + i * 0.07);
     });
-    tl.set(villa.upper, { visible: true }, 2.54);
     tl.to(villa.upper.scale, { y: 1, duration: 0.5, ease: 'power3.out' }, 2.55);
-    tl.set(villa.roof, { visible: true }, 2.55);
     tl.fromTo(villa.roof.position, { y: 10.5 }, { y: 6.45, duration: 0.4, ease: 'bounce.out' }, 2.6);
 
     // Scene 4 [3,4]: shell → villa (warm tint + cladding + glass + emissive windows).
     villa.shellMats.forEach((m) => {
       tl.to(m.color, { r: WARM_STONE.r, g: WARM_STONE.g, b: WARM_STONE.b, duration: 0.7 }, 3.05);
     });
-    tl.set(villa.finishes, { visible: true }, 3.0);
-    tl.set(villa.windowMesh, { visible: true }, 3.12);
     tl.to(villa.claddingMat, { opacity: 1, duration: 0.6 }, 3.1);
     tl.to(villa.glassMat, { opacity: 0.9, duration: 0.6 }, 3.2);
     tl.to(villa.windowMat, { emissiveIntensity: 0.8, duration: 0.7 }, 3.25);
-    tl.set(villa.rebar, { visible: false }, 3.75);
-    tl.set(site.developed, { visible: true }, 3.45);
 
     // Scene 5 [4,5]: gate appears + opens.
-    tl.set(handles.gate.group, { visible: true }, 4.0);
     tl.to(handles.gate.left.rotation, { y: -Math.PI * 0.62, duration: 0.6, ease: 'power2.inOut' }, 4.2);
     tl.to(handles.gate.right.rotation, { y: Math.PI * 0.62, duration: 0.6, ease: 'power2.inOut' }, 4.2);
 
     // Scenes 6–9 [5,9]: interior warms.
-    tl.set(villa.interior, { visible: true }, 5.0);
-    tl.to(villa.interiorLight, { intensity: 1.35, duration: 0.5 }, 5.1);
+    // Architectural cutaway: remove only the exterior envelope while the camera is indoors.
+    tl.to(env.sun, { intensity: 0.58, duration: 0.45 }, 5.0);
+    tl.to(villa.interiorLight, { intensity: 0.34, duration: 0.5 }, 5.1);
     tl.to(villa.windowMat, { emissiveIntensity: 1.05, duration: 1 }, 5.5);
-    const roomOrder = [villa.rooms.living, villa.rooms.kitchen, villa.rooms.bedroom, villa.rooms.bathroom];
-    roomOrder.forEach((room) => tl.set(room, { visible: false }, 5));
-    roomOrder.forEach((room, i) => {
-      tl.set(room, { visible: true }, 5 + i);
-      if (i > 0) tl.set(roomOrder[i - 1], { visible: false }, 5 + i);
-    });
-
-    // Scene 10 [9,10]: leave interior.
-    tl.to(villa.interiorLight, { intensity: 0.5, duration: 0.5 }, 9.1);
-    tl.set(villa.interior, { visible: false }, 9.7);
-
-    // Scene 11 [10,11]: full glow reveal.
-    tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 10.15);
+    // Final exterior reveal; interior remains assembled behind the shell.
+    tl.to(env.sun, { intensity: 2.7, duration: 0.45 }, 15.4);
+    tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 16.15);
 
     // Copy overlay: fade each scene label in over its window, out near the end.
     SCENES.forEach((s, idx) => {
       const el = copyEls[idx];
       if (!el || (!s.title && !s.eyebrow)) return;
-      tl.fromTo(el, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.28, ease: 'power2.out' }, idx + 0.18);
-      tl.to(el, { autoAlpha: 0, y: -14, duration: 0.22, ease: 'power2.in' }, idx + 0.78);
+      tl.fromTo(el, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, idx + 0.64);
+      tl.to(el, { autoAlpha: 0, y: -10, duration: 0.1, ease: 'power2.in' }, idx + 0.88);
+    });
+    // Keep normalized timeline progress exactly aligned with the 17 scene windows.
+    tl.to({ value: 0 }, { value: 1, duration: .001 }, SCENES.length - .001);
+    tl.eventCallback('onUpdate', () => {
+      applyVisibilityAt(tl.time());
+      invalidate();
     });
   });
 
+  applyVisibilityAt(0);
   ScrollTrigger.refresh();
   invalidate();
 
   return {
     seek: (p: number) => {
-      master?.progress(THREE.MathUtils.clamp(p, 0, 1));
+      const progress = THREE.MathUtils.clamp(p, 0, 1);
+      master?.progress(progress);
+      applyVisibilityAt(master?.time() ?? progress * SCENES.length);
       invalidate();
     },
     dispose: () => ctx.revert(),

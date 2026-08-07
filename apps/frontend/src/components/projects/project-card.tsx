@@ -18,6 +18,7 @@ export function ProjectCard({
   return (
     <Link
       href={`/projects/${project.slug}`}
+      data-premium-card
       className="group block overflow-hidden rounded-xl border border-white/10 bg-surface transition-colors hover:border-gold/40"
     >
       <MediaImage

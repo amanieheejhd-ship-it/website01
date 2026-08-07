@@ -131,7 +131,7 @@ export function WalkthroughScrubber({
     return (
       <img
         src={framePath(basePath, 0, pad, ext)}
-        alt="Fardeen villa walkthrough"
+        alt="Ansari Space Craft villa walkthrough"
         style={{ width: '100%', height: 'auto', display: 'block' }}
       />
     );
@@ -164,7 +164,7 @@ export function WalkthroughScrubber({
           <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: '#0a0a0a' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'Georgia, serif', letterSpacing: '0.34em', textTransform: 'uppercase', fontSize: '0.72rem', color: '#c8a15a' }}>
-                Fardeen · Walkthrough
+                Ansari Space Craft · Walkthrough
               </div>
               <div style={{ width: 220, height: 2, background: 'rgba(255,255,255,0.12)', margin: '18px auto 0' }}>
                 <div style={{ height: '100%', width: `${Math.round(progress * 100)}%`, background: '#c8a15a', transition: 'width 0.15s linear' }} />

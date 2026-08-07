@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 /**
- * Hero right-side construction cluster: thin gold line-icons of Fardeen's trades, arranged on a gentle
+ * Hero right-side construction cluster: thin gold line-icons of Ansari Space Craft's trades, arranged on a gentle
  * vertical arc. On load they slide in from the right (staggered ease-out), then float continuously with
  * a light pointer parallax so the composition feels alive — without competing with the headline on the
  * left. `prefers-reduced-motion` → rendered statically in place (no entrance / float / parallax).

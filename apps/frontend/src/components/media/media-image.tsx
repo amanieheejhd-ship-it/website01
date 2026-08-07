@@ -33,7 +33,7 @@ export function MediaImage({ url, alt, label, className, sizes, priority }: Medi
         className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(120%_120%_at_20%_0%,rgba(200,161,90,0.22),transparent_55%),radial-gradient(120%_120%_at_100%_100%,rgba(154,119,54,0.18),#141414_60%)]"
       >
         <span className="pointer-events-none select-none px-4 text-center font-display text-sm uppercase tracking-[0.2em] text-gold/70">
-          {label ?? 'Fardeen'}
+          {label ?? 'Ansari Space Craft'}
         </span>
       </div>
       {showImage ? (

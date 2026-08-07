@@ -22,7 +22,7 @@ const LIMIT = 9;
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'Selected work from Fardeen — villas, interiors and commercial fit-outs delivered end to end across India.',
+    'Selected work from Ansari Space Craft — villas, interiors and commercial fit-outs delivered end to end across India.',
   alternates: { canonical: '/projects' },
 };
 
@@ -112,7 +112,7 @@ export default async function ProjectsPage({
       {projects.length > 0 ? (
         <JsonLd
           data={itemListJsonLd(
-            'Fardeen projects',
+            'Ansari Space Craft projects',
             projects.map((p) => ({ url: absoluteUrl(`/projects/${p.slug}`), name: p.title })),
           )}
         />

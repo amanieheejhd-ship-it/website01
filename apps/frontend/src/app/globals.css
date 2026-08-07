@@ -50,14 +50,6 @@ body {
     background-color: rgba(200, 161, 90, 0.3);
     color: #f5f5f4;
   }
-
-  /* Hide the native cursor only while the JS custom cursor is mounted (desktop + motion allowed).
-     The class is added by <CustomCursor> and removed on cleanup, so touch / reduced-motion / no-JS
-     always keep the native cursor. */
-  html.has-custom-cursor,
-  html.has-custom-cursor * {
-    cursor: none !important;
-  }
 }
 
 @layer components {
@@ -74,5 +66,66 @@ body {
     background:
       radial-gradient(120% 80% at 50% 0%, rgba(200, 161, 90, 0.12), transparent 60%),
       radial-gradient(100% 100% at 50% 100%, rgba(10, 10, 10, 0.9), #0a0a0a 70%);
+  }
+}
+
+/* Premium interactions stay scoped to intentional CTAs, navigation, and portfolio/service cards. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-cta {
+    transition:
+      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 240ms ease,
+      border-color 240ms ease;
+  }
+  .premium-cta:hover {
+    transform: scale(1.025);
+    box-shadow: 0 12px 34px -14px rgba(200, 161, 90, 0.62);
+  }
+
+  header nav a,
+  footer nav a {
+    position: relative;
+    text-decoration: none;
+  }
+
+  header nav a::after,
+  footer nav a::after {
+    position: absolute;
+    right: 0;
+    bottom: -0.28rem;
+    left: 0;
+    height: 1px;
+    content: '';
+    background: linear-gradient(90deg, transparent, #e5c987 18%, #c8a15a 82%, transparent);
+    filter: drop-shadow(0 0 5px rgba(200, 161, 90, 0.45));
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  header nav a:hover::after,
+  header nav a:focus-visible::after,
+  footer nav a:hover::after,
+  footer nav a:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  [data-premium-card] {
+    transition:
+      transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 260ms ease,
+      box-shadow 260ms ease;
+  }
+  [data-premium-card]:hover {
+    transform: translateY(-4px);
+    border-color: rgba(200, 161, 90, 0.48);
+    box-shadow: 0 18px 45px -24px rgba(200, 161, 90, 0.48);
+  }
+  [data-premium-card] img {
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-premium-card]:hover img {
+    transform: scale(1.03);
   }
 }

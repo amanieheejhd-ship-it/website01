@@ -38,11 +38,28 @@ export function SiteFooter() {
           <p className="text-muted">{SITE.locality}</p>
         </div>
 
+        {/* Compact square location map (replaces the old "Start" column). */}
         <div className="space-y-2 text-sm">
-          <p className="font-medium text-foreground">Start</p>
-          <Link href="/contact" className="block text-gold hover:text-gold-light">
-            Request a quotation →
-          </Link>
+          <p className="font-medium text-foreground">Visit us</p>
+          <div className="w-full max-w-[300px] overflow-hidden rounded-xl border border-gold/25 bg-surface shadow-[0_0_40px_-16px_rgba(200,161,90,0.35)]">
+            <iframe
+              title={`Map of ${SITE.locality}`}
+              src={SITE.mapEmbedUrl}
+              className="block aspect-square w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+          <p className="text-muted">{SITE.locality}</p>
+          <a
+            href={SITE.mapLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded text-gold transition-colors hover:text-gold-light"
+          >
+            Get directions →
+          </a>
         </div>
       </Container>
 

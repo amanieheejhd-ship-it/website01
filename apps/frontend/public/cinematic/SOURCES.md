@@ -38,6 +38,14 @@ distant-villa LOD shells are generated at runtime in `lib/cinematic/world.ts`. T
 weight and preserve the LOW quality tier. Tree impostors are instanced cross-planes with an asymmetric
 painted canopy mask rather than sphere geometry; pool normals are a small generated `DataTexture`.
 
+## Two-floor interior
+
+The foyer, living, dining, kitchen, powder room, staircase, landing, master suite, master bathroom,
+and second bedroom are lean procedural Three.js geometry, so this walkthrough adds no binary weight.
+They reuse the CC0 Poly Haven wood, marble, and concrete maps above plus the existing CC0 Sofa 01,
+CoffeeTable 01, and ArmChair 01 hero props. All remaining cabinets, sanitary fixtures, appliances,
+lights, mirrors, stairs, rugs, and room shells are original runtime geometry created for this site.
+
 ### ⚠️ Villa centerpiece — **user must supply a GLB** (the one gating dependency)
 No CC0 luxury-villa / house model exists at production quality anywhere downloadable (Poly Haven has
 **no buildings** — only props, furniture, doors, windows, facades; Sketchfab CC0 requires an

@@ -11,8 +11,8 @@ import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 /**
  * Photoreal post-processing pipeline + adaptive quality (weak-machine safe).
  *
- * RenderPass (linear HDR) -> SSAO (contact occlusion) -> UnrealBloom (window glow) ->
- * OutputPass (ACES filmic tone map + sRGB) -> Vignette. The renderer's toneMapping is ACES, applied
+ * RenderPass (linear HDR) -> SSAO (contact occlusion) -> UnrealBloom (window glow) -> Vignette ->
+ * OutputPass (ACES filmic tone map + sRGB). The renderer's toneMapping is ACES, applied
  * by OutputPass in the composer path and by the renderer directly in the degraded path.
  *
  * ADAPTIVE: on sustained low FPS it steps down a quality tier rather than freezing —
@@ -48,7 +48,7 @@ export function createPipeline(
   ssao.maxDistance = 0.06;
   composer.addPass(ssao);
 
-  const bloom = new UnrealBloomPass(size.clone(), 0.5, 0.6, 0.9); // strength, radius, threshold (bright windows only)
+  const bloom = new UnrealBloomPass(size.clone(), 0.18, 0.25, 1.25); // restrained fixture/window highlights only
   composer.addPass(bloom);
 
   const dof = new BokehPass(scene, camera, {
@@ -58,12 +58,13 @@ export function createPipeline(
   });
   composer.addPass(dof);
 
-  composer.addPass(new OutputPass()); // ACES filmic (from renderer.toneMapping) + sRGB
-
   const vignette = new ShaderPass(VignetteShader);
   vignette.uniforms.offset.value = 0.95;
   vignette.uniforms.darkness.value = 1.15;
   composer.addPass(vignette);
+  // OutputPass stays last: one ACES filmic transform + one linear-to-sRGB conversion for the
+  // composer path. The LOW-tier direct path uses the renderer's same ACES configuration once.
+  composer.addPass(new OutputPass());
 
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
   const cores = navigator.hardwareConcurrency || 8;

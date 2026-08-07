@@ -43,7 +43,7 @@ export default function CinematicExperience() {
     renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 0.76;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -70,6 +70,12 @@ export default function CinematicExperience() {
       __fardeenPerf?: unknown;
       __fardeenSeek?: (p: number) => void;
       __fardeenBenchmark?: (durationMs?: number) => Promise<unknown>;
+      __fardeenInteriorState?: () => Record<string, boolean>;
+      __fardeenVisibilityState?: () => Record<string, unknown>;
+      __fardeenCameraState?: () => {
+        position: { x: number; y: number; z: number };
+        target: { x: number; y: number; z: number };
+      };
     };
     const render = () => {
       renderReq = false;
@@ -132,7 +138,8 @@ export default function CinematicExperience() {
         requestAnimationFrame(sample);
       });
     };
-    void enrichWorld(world, renderer, invalidate).finally(() => {
+    const loadingDeadline = new Promise<void>((resolve) => window.setTimeout(resolve, 8000));
+    void Promise.race([enrichWorld(world, renderer, invalidate), loadingDeadline]).finally(() => {
       if (!disposed) setLoading(false);
     });
 
@@ -176,6 +183,28 @@ export default function CinematicExperience() {
     });
 
     win.__fardeenSeek = director.seek; // verification seam
+    win.__fardeenInteriorState = () => Object.fromEntries(
+      Object.entries(world.handles.villa.rooms).map(([name, room]) => [name, room.visible]),
+    );
+    win.__fardeenVisibilityState = () => ({
+      slab: world.handles.villa.slab.visible,
+      rebar: world.handles.villa.rebar.visible,
+      walls: world.handles.villa.walls.some((wall) => wall.visible),
+      columns: world.handles.villa.columns.some((column) => column.visible),
+      upper: world.handles.villa.upper.visible,
+      roof: world.handles.villa.roof.visible,
+      finishes: world.handles.villa.finishes.visible,
+      windows: world.handles.villa.windowMesh.visible,
+      developedSite: world.handles.site.developed.visible,
+      gate: world.handles.gate.group.visible,
+      interior: world.handles.villa.interior.visible,
+      furniture: world.handles.villa.furnitureGroup.visible,
+      rooms: win.__fardeenInteriorState?.() ?? {},
+    });
+    win.__fardeenCameraState = () => ({
+      position: { x: world.camera.position.x, y: world.camera.position.y, z: world.camera.position.z },
+      target: { x: lookTarget.x, y: lookTarget.y, z: lookTarget.z },
+    });
 
     const onResize = () => {
       setSize();
@@ -190,6 +219,9 @@ export default function CinematicExperience() {
       disposed = true;
       delete win.__fardeenSeek;
       delete win.__fardeenBenchmark;
+      delete win.__fardeenInteriorState;
+      delete win.__fardeenVisibilityState;
+      delete win.__fardeenCameraState;
       observer.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('resize', onResize);

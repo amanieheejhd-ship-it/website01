@@ -12,7 +12,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Contact & Quotation',
   description:
-    'Get in touch with Fardeen or request a detailed, tailored quotation for your construction or interior project.',
+    'Get in touch with Ansari Space Craft or request a detailed, tailored quotation for your construction or interior project.',
   alternates: { canonical: '/contact' },
 };
 

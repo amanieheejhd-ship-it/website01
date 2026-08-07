@@ -47,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // Always emit a concrete title — never `undefined` (which can drop the <title> entirely if the
   // CMS is briefly unreachable during an ISR revalidation).
   return {
-    title: { absolute: seo?.title || 'Fardeen — We build the moment you walk in' },
+    title: { absolute: seo?.title || `${SITE.name} — We build the moment you walk in` },
     description: seo?.description || SITE.description,
     alternates: { canonical: '/' },
   };
@@ -92,7 +92,7 @@ export default async function HomePage() {
       {services.data.length > 0 ? (
         <JsonLd
           data={itemListJsonLd(
-            'Fardeen services',
+            `${SITE.name} services`,
             services.data.map((s) => ({ url: absoluteUrl(`/services#${s.slug}`), name: s.name })),
           )}
         />

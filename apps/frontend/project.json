@@ -7,6 +7,16 @@
     "type:app-frontend"
   ],
   "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "outputs": ["{workspaceRoot}/apps/frontend/.next"],
+      "options": {
+        "command": "next build",
+        "cwd": "apps/frontend",
+        "env": { "NODE_ENV": "production" }
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "cache": true,

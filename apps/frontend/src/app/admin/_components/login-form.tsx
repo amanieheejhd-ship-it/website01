@@ -67,7 +67,7 @@ export function LoginForm() {
     <main className="flex min-h-screen items-center justify-center bg-background px-5 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <span className="font-display text-2xl font-medium tracking-wide text-foreground">Fardeen</span>
+          <span className="font-display text-2xl font-medium tracking-wide text-foreground">Ansari Space Craft</span>
           <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-gold">
             Admin
           </span>

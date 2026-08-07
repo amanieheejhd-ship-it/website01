@@ -14,7 +14,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Services',
   description:
-    'Twelve construction and interior disciplines delivered in-house by Fardeen — home construction, ' +
+    'Twelve construction and interior disciplines delivered in-house by Ansari Space Craft — home construction, ' +
     'aluminium & glass, ACP cladding, modular kitchens, interiors, steel fabrication and more.',
   alternates: { canonical: '/services' },
 };
