@@ -5,7 +5,7 @@ import { NAV_LINKS, SITE } from '../../lib/site';
 /** Marketing footer with contact details, nav, and copyright. */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-background">
+    <footer>
       <Container size="wide" className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-3">
           <p className="font-display text-lg tracking-[0.2em] text-foreground">
@@ -63,7 +63,7 @@ export function SiteFooter() {
         </div>
       </Container>
 
-      <Container size="wide" className="border-t border-white/5 py-6">
+      <Container size="wide" className="py-6">
         <p className="text-xs text-muted">
           © {new Date().getFullYear()} {SITE.legalName}. All rights reserved.
         </p>

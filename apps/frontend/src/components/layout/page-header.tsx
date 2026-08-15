@@ -14,7 +14,7 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="border-b border-white/10 bg-surface/30">
+    <div>
       <Container size="wide" className="py-16 sm:py-20">
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
         <Heading as="h1" size="xl" className="mt-3 text-balance">

@@ -2,6 +2,7 @@
 
 import { domAnimation, LazyMotion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import { PointerGlow } from '../interactive/pointer-glow';
 import { QueryProvider } from './query-provider';
 import { ThemeProvider } from './theme-provider';
 
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider>
       <QueryProvider>
         <LazyMotion features={domAnimation} strict>
+          <PointerGlow />
           {children}
         </LazyMotion>
       </QueryProvider>

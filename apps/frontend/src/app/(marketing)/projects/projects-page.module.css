@@ -1,0 +1,10 @@
+.page { position: relative; overflow: clip; }
+.page::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .34; background-image: radial-gradient(circle at 15% 20%, rgba(204,164,82,.18) 0 1px, transparent 1.5px), radial-gradient(circle at 80% 65%, rgba(204,164,82,.12) 0 1px, transparent 1.5px); background-size: 190px 190px, 270px 270px; }
+.index { scrollbar-width: none; }
+.index::-webkit-scrollbar { display: none; }
+.category { position: relative; }
+.category::before { content: ''; position: absolute; inset-inline: 0; top: 0; height: 1px; background: linear-gradient(90deg, rgba(204,164,82,.65), rgba(255,255,255,.08), transparent); }
+@media (min-width: 1024px) {
+  .category:nth-of-type(even) .gallery { order: 2; }
+  .category:nth-of-type(even) .copy { order: 1; padding-left: 0; padding-right: 3rem; }
+}

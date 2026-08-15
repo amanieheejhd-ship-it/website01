@@ -403,7 +403,7 @@ services:
       READY_CHECK_POSTGRES: "true"
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
-      MAIL_FROM: ${MAIL_FROM:-Fardeen <no-reply@fardeen.example>}
+      MAIL_FROM: ${MAIL_FROM:-Ansari Space Craft <no-reply@fardeen.example>}
     healthcheck: *svc-healthcheck
     depends_on: *svc-depends
     deploy: *deploy-svc

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OPENING_CAMERA, PALETTE, SCENES } from './scenes';
 import type { WorldHandles } from './world';
 
-const WARM_STONE = new THREE.Color(0xb9a681);
+const WARM_STONE = new THREE.Color(0xdad4c8);
 const rgb = (hex: number) => {
   const c = new THREE.Color(hex);
   return { r: c.r, g: c.g, b: c.b };
@@ -23,7 +23,7 @@ export function createDirector(opts: {
   spacer: HTMLElement;
   copyEls: HTMLElement[];
   invalidate: () => void;
-}): { seek: (p: number) => void; dispose: () => void } {
+}): { seek: (p: number) => void; progress: () => number; time: () => number; dispose: () => void } {
   const { camera, handles, lookTarget, spacer, copyEls, invalidate } = opts;
   const { env, villa, site } = handles;
 
@@ -47,58 +47,66 @@ export function createDirector(opts: {
   villa.upper.visible = false;
   villa.roof.visible = false;
   villa.finishes.visible = false;
+  villa.exteriorShell.visible = false;
   villa.windowMesh.visible = false;
   villa.interior.visible = false;
   villa.furnitureGroup.visible = false;
   Object.values(villa.rooms).forEach((room) => { room.visible = false; });
   handles.gate.group.visible = false;
+  villa.mainDoor.rotation.y = 0;
+  // Ground-floor guest suite doors start CLOSED so the room is sealed from the hall/kitchen views.
+  villa.groundBedroomDoor.rotation.y = 0;
+  villa.groundBathDoor.rotation.y = 0;
   site.developed.visible = false;
   gsap.set(copyEls, { autoAlpha: 0, y: 16 });
 
   let master: gsap.core.Timeline | null = null;
   const roomReveals: [THREE.Group, number][] = [
-    [villa.rooms.foyer, 5],
-    [villa.rooms.living, 6],
-    [villa.rooms.dining, 7],
-    [villa.rooms.kitchen, 8],
-    [villa.rooms.powder, 9],
-    [villa.rooms.stairs, 10],
-    [villa.rooms.landing, 11],
-    [villa.rooms.master, 12],
-    [villa.rooms.secondBedroom, 13],
-    [villa.rooms.masterBath, 14],
-    [villa.rooms.terrace, 15],
+    [villa.rooms.living, 5], // main door enters directly into the open-plan ground floor
+    [villa.rooms.dining, 5], // shell/content must already exist from the living-room entry view
+    [villa.rooms.kitchen, 5], // prevent the right wing popping into existence during scroll
+    [villa.rooms.stairs, 7],
+    [villa.rooms.landing, 7],
+    [villa.rooms.master, 8],
+    [villa.rooms.masterBath, 8], // the attached washroom reveals with its bedroom
+    [villa.rooms.commonBath, 9],
+    [villa.rooms.secondBedroom, 10],
+    [villa.rooms.terrace, 11],
   ];
   /**
    * Visibility is a pure function of the CURRENT timeline time. No historical latch is allowed:
    * down-scroll reveals additively, reverse-scroll removes in the exact opposite order, and t=0
-   * always returns to terrain/grass/fog only. The exterior envelope's indoor cutaway is the sole
-   * presentation exception; completed interior objects themselves remain threshold-only.
+   * always returns to terrain/grass/fog only.
+   *
+   * The completed exterior has two valid appearances: the approach before the tour and the restored
+   * Scene-13 hero state. Only the middle tour window uses the open-top cutaway. Deriving both states
+   * from current time makes final restoration and reverse scrolling deterministic.
    */
   const applyVisibilityAt = (timelinePosition: number): void => {
-    const indoorCutaway = timelinePosition >= 5 && timelinePosition < 15.4;
+    const finalExterior = timelinePosition >= 12;
+    const interiorTour = timelinePosition >= 5 && !finalExterior;
     villa.slab.visible = timelinePosition >= 1.04;
     // Rebar is temporary construction staging, not a completed interior/overview element. Retire it
     // once the finishes arrive so rods cannot pierce the furnished ground floor.
     villa.rebar.visible = timelinePosition >= 1.39 && timelinePosition < 3.75;
     villa.columns.forEach((column, index) => {
-      column.visible = timelinePosition >= 2.04 + index * .06 && !indoorCutaway;
+      column.visible = timelinePosition >= 2.04 + index * .06;
     });
     villa.walls.forEach((wall, index) => {
-      wall.visible = timelinePosition >= 2.14 + index * .07 && !indoorCutaway;
+      wall.visible = timelinePosition >= 2.14 + index * .07;
     });
-    villa.upper.visible = timelinePosition >= 2.54 && !indoorCutaway;
-    villa.roof.visible = timelinePosition >= 2.55 && !indoorCutaway;
-    villa.finishes.visible = timelinePosition >= 3 && !indoorCutaway;
-    villa.windowMesh.visible = timelinePosition >= 3.12 && !indoorCutaway;
+    villa.upper.visible = timelinePosition >= 2.54 && !interiorTour;
+    villa.roof.visible = timelinePosition >= 2.55 && !interiorTour;
+    villa.finishes.visible = timelinePosition >= 3;
+    villa.exteriorShell.visible = timelinePosition >= 3.08 && !interiorTour;
+    villa.windowMesh.visible = timelinePosition >= 3.12;
     site.developed.visible = timelinePosition >= 3.45;
     handles.gate.group.visible = timelinePosition >= 4;
 
-    const interiorVisible = timelinePosition >= 5;
-    villa.interior.visible = interiorVisible;
-    villa.furnitureGroup.visible = interiorVisible;
+    villa.interior.visible = interiorTour;
+    villa.furnitureGroup.visible = interiorTour;
     roomReveals.forEach(([room, threshold]) => {
-      room.visible = timelinePosition >= threshold;
+      room.visible = interiorTour && timelinePosition >= threshold;
     });
   };
   const ctx = gsap.context(() => {
@@ -173,14 +181,26 @@ export function createDirector(opts: {
     tl.to(handles.gate.left.rotation, { y: -Math.PI * 0.62, duration: 0.6, ease: 'power2.inOut' }, 4.2);
     tl.to(handles.gate.right.rotation, { y: Math.PI * 0.62, duration: 0.6, ease: 'power2.inOut' }, 4.2);
 
-    // Scenes 6–9 [5,9]: interior warms.
-    // Architectural cutaway: remove only the exterior envelope while the camera is indoors.
+    // Scene 6 [5,6]: THE MAIN DOOR OPENS and the tour steps straight into the living hall.
+    tl.to(villa.mainDoor.rotation, { y: -1.95, duration: 0.24, ease: 'power2.inOut' }, 5.02);
+
+    // Scene 8 [7,8]: the ground-floor guest suite. Both doors stay CLOSED through the hall + kitchen
+    // (their tweens have not started yet, so the zero-state 0 holds). The bedroom door swings inward as
+    // the camera reaches the doorway and shuts again as the camera leaves; the ensuite door opens for
+    // the washroom leg and closes on the way out. Absolute-position tweens keep this reverse-scrub safe.
+    tl.to(villa.groundBedroomDoor.rotation, { y: 1.32, duration: 0.16, ease: 'power2.out' }, 7.14); // open
+    tl.to(villa.groundBathDoor.rotation, { y: -1.30, duration: 0.10, ease: 'power2.out' }, 7.48); // open
+    tl.to(villa.groundBathDoor.rotation, { y: 0, duration: 0.10, ease: 'power2.in' }, 7.62); // close ensuite
+    tl.to(villa.groundBedroomDoor.rotation, { y: 0, duration: 0.14, ease: 'power2.in' }, 7.74); // close bedroom
+
+    // Scenes 6–12: interior warms; the open-top cutaway is scoped only to this tour window.
     tl.to(env.sun, { intensity: 0.58, duration: 0.45 }, 5.0);
-    tl.to(villa.interiorLight, { intensity: 0.34, duration: 0.5 }, 5.1);
+    tl.to(villa.interiorLight, { intensity: 0.56, duration: 0.5 }, 5.1);
     tl.to(villa.windowMat, { emissiveIntensity: 1.05, duration: 1 }, 5.5);
-    // Final exterior reveal; interior remains assembled behind the shell.
-    tl.to(env.sun, { intensity: 2.7, duration: 0.45 }, 15.4);
-    tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 16.15);
+    // Final exterior reveal: visibility restores the massing/roof and hides the cutaway interior.
+    tl.to(env.sun, { intensity: 2.7, duration: 0.45 }, 11.35);
+    tl.to(villa.mainDoor.rotation, { y: 0, duration: .38, ease: 'power2.inOut' }, 12.04);
+    tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 12.2);
 
     // Copy overlay: fade each scene label in over its window, out near the end.
     SCENES.forEach((s, idx) => {
@@ -189,7 +209,7 @@ export function createDirector(opts: {
       tl.fromTo(el, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, idx + 0.64);
       tl.to(el, { autoAlpha: 0, y: -10, duration: 0.1, ease: 'power2.in' }, idx + 0.88);
     });
-    // Keep normalized timeline progress exactly aligned with the 17 scene windows.
+    // Keep normalized timeline progress exactly aligned with the scene windows.
     tl.to({ value: 0 }, { value: 1, duration: .001 }, SCENES.length - .001);
     tl.eventCallback('onUpdate', () => {
       applyVisibilityAt(tl.time());
@@ -208,6 +228,8 @@ export function createDirector(opts: {
       applyVisibilityAt(master?.time() ?? progress * SCENES.length);
       invalidate();
     },
+    progress: () => master?.progress() ?? 0,
+    time: () => master?.time() ?? 0,
     dispose: () => ctx.revert(),
   };
 }

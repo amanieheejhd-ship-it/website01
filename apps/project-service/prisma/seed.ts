@@ -52,7 +52,7 @@ async function main(): Promise<void> {
         id: randomUUID(),
         slug: p.slug,
         title: p.title,
-        summary: `${p.title} — a Fardeen build in ${p.location}.`,
+        summary: `${p.title} — an Ansari Space Craft build in ${p.location}.`,
         body: `Full case study for ${p.title}.`,
         categoryId: catIds[p.category],
         location: p.location,

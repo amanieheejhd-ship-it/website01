@@ -46,7 +46,8 @@ pnpm-debug.log*
 # Docker local volumes
 .docker-data/
 
-# stray tsc/ts-node artifacts in TS lib sources (real JS presets live in packages/config)
+# Stray tsc/ts-node artifacts in TS lib sources
+# Real JS presets live in packages/config
 packages/types/src/**/*.js
 packages/types/src/**/*.js.map
 packages/shared/src/**/*.js
@@ -59,13 +60,17 @@ e2e-report/
 test-results/
 playwright-report/
 
-# Cinematic CC0 assets (binaries git-ignored; text manifests/docs tracked)
-apps/frontend/public/cinematic/**
-!apps/frontend/public/cinematic/SOURCES.md
-!apps/frontend/public/cinematic/walkthrough/
-!apps/frontend/public/cinematic/walkthrough/index.html
-!apps/frontend/public/cinematic/walkthrough/README.md
+# Cinematic runtime assets
+# Required 3D models, textures, HDRI and other runtime assets are tracked.
+# Generated walkthrough frames are excluded.
 apps/frontend/public/cinematic/walkthrough/frames/
 
 # TS build cache
 apps/frontend/tsconfig.tsbuildinfo
+
+# Local verification / test artifacts
+artifacts/
+cinematic-final-fix-snapshot.txt
+# Backup files
+*.bak
+*.backup

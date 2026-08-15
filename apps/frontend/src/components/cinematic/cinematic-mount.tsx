@@ -15,16 +15,13 @@ const CinematicExperience = dynamic(() => import('./cinematic-experience'), {
 
 const INTERACTION_EVENTS = ['wheel', 'pointermove', 'touchstart', 'keydown'] as const;
 const STATIC_ROOMS = [
-  ['Foyer', 'Console, entry rug and warm pendant lighting'],
-  ['Living room', 'Designer seating, marble table, media wall and large windows'],
-  ['Dining room', 'Six-seat dining table and sculptural pendant'],
-  ['Kitchen', 'Island, cabinets, cooktop, hood, sink, fridge, AC and tiled floor'],
-  ['Powder room', 'Private tiled room with vanity, mirror and toilet'],
-  ['Staircase', 'The connected route to the upper floor'],
-  ['Landing', 'Upper hallway connecting every private room'],
-  ['Master bedroom', 'Upholstered bed, wardrobe, lamps, AC and wooden floor'],
-  ['Master bathroom', 'Marble vanity, mirror, tub, shower glass and toilet'],
+  ['Living hall', 'The main door opens straight into plush sofas, media wall and warm lamps'],
+  ['Kitchen & dining', 'Island, cooktop, hood, sink, fridge and the six-seat dining table beside it'],
+  ['Staircase', 'Floating timber treads and a bronze railing to the upper floor'],
+  ['Master bedroom', 'Upholstered bed, wardrobe, lamps and a door to its own washroom'],
+  ['Attached washroom', 'Marble, glass shower, vanity, mirror and WC — entered from the bedroom'],
   ['Second bedroom', 'Bed, wardrobe, desk and warm ceiling light'],
+  ['Terrace', 'Outdoor lounge, planters and the evening skyline'],
 ] as const;
 
 function StaticInteriorNavigator() {
@@ -54,7 +51,19 @@ function StaticInteriorNavigator() {
 export function CinematicMount() {
   const reducedMotion = useReducedMotion();
   const webgl = useWebGLSupport();
-  const enabled = !reducedMotion && webgl === true;
+
+  // Small screens (phones/tablets) never run the heavy scroll-scrubbed three.js journey — it is the
+  // main perf/heat cost on mobile. They get the lightweight static room navigator instead.
+  const [smallScreen, setSmallScreen] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const sync = () => setSmallScreen(!mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const enabled = !reducedMotion && !smallScreen && webgl === true;
 
   const [active, setActive] = useState(false);
 
@@ -66,7 +75,7 @@ export function CinematicMount() {
     return () => INTERACTION_EVENTS.forEach((ev) => window.removeEventListener(ev, activate));
   }, [enabled, active]);
 
-  if (reducedMotion) return <StaticInteriorNavigator />;
+  if (reducedMotion || smallScreen) return <StaticInteriorNavigator />;
   if (!enabled) return null;
   if (active) return <CinematicExperience />;
 

@@ -10,6 +10,8 @@ import { createPipeline, type Pipeline } from '../../lib/cinematic/pipeline';
 import { SCENE_COUNT, SCENES } from '../../lib/cinematic/scenes';
 import { createWorld, enrichWorld } from '../../lib/cinematic/world';
 
+const CINEMATIC_BUILD_SIGNATURE = 'upper-left-private-suite-facade-v2';
+
 /**
  * The pinned cinematic canvas — raw three.js (no react-reconciler). A tall scroll spacer holds a
  * sticky, viewport-filling <canvas>; scroll scrubs the director's GSAP timeline. Lenis is the sole
@@ -68,6 +70,7 @@ export default function CinematicExperience() {
     let pipeline: Pipeline | null = null;
     const win = window as unknown as {
       __fardeenPerf?: unknown;
+      __fardeenBuildSignature?: string;
       __fardeenSeek?: (p: number) => void;
       __fardeenBenchmark?: (durationMs?: number) => Promise<unknown>;
       __fardeenInteriorState?: () => Record<string, boolean>;
@@ -76,6 +79,10 @@ export default function CinematicExperience() {
         position: { x: number; y: number; z: number };
         target: { x: number; y: number; z: number };
       };
+      __fardeenSetCamera?: (pose: {
+        position: { x: number; y: number; z: number };
+        target: { x: number; y: number; z: number };
+      }) => void;
     };
     const render = () => {
       renderReq = false;
@@ -182,29 +189,109 @@ export default function CinematicExperience() {
       invalidate,
     });
 
+    win.__fardeenBuildSignature = CINEMATIC_BUILD_SIGNATURE;
     win.__fardeenSeek = director.seek; // verification seam
     win.__fardeenInteriorState = () => Object.fromEntries(
       Object.entries(world.handles.villa.rooms).map(([name, room]) => [name, room.visible]),
     );
-    win.__fardeenVisibilityState = () => ({
-      slab: world.handles.villa.slab.visible,
-      rebar: world.handles.villa.rebar.visible,
-      walls: world.handles.villa.walls.some((wall) => wall.visible),
-      columns: world.handles.villa.columns.some((column) => column.visible),
-      upper: world.handles.villa.upper.visible,
-      roof: world.handles.villa.roof.visible,
-      finishes: world.handles.villa.finishes.visible,
-      windows: world.handles.villa.windowMesh.visible,
-      developedSite: world.handles.site.developed.visible,
-      gate: world.handles.gate.group.visible,
-      interior: world.handles.villa.interior.visible,
-      furniture: world.handles.villa.furnitureGroup.visible,
-      rooms: win.__fardeenInteriorState?.() ?? {},
-    });
+    win.__fardeenVisibilityState = () => {
+      const facade = world.handles.villa.upperLeftFacade;
+      const bounds = new THREE.Box3().setFromObject(facade);
+      const materials = new Map<string, {
+        name: string;
+        type: string;
+        opacity: number;
+        transparent: boolean;
+      }>();
+      let meshCount = 0;
+      let minRenderOrder = Number.POSITIVE_INFINITY;
+      let maxRenderOrder = Number.NEGATIVE_INFINITY;
+      facade.traverse((object) => {
+        if (!(object instanceof THREE.Mesh)) return;
+        meshCount += 1;
+        minRenderOrder = Math.min(minRenderOrder, object.renderOrder);
+        maxRenderOrder = Math.max(maxRenderOrder, object.renderOrder);
+        const meshMaterials = Array.isArray(object.material) ? object.material : [object.material];
+        meshMaterials.forEach((material) => {
+          const key = material.uuid;
+          if (!materials.has(key)) {
+            materials.set(key, {
+              name: material.name || '(unnamed)',
+              type: material.type,
+              opacity: material.opacity,
+              transparent: material.transparent,
+            });
+          }
+        });
+      });
+      const effectivelyVisible = (object: THREE.Object3D): boolean => {
+        let current: THREE.Object3D | null = object;
+        while (current) {
+          if (!current.visible) return false;
+          current = current.parent;
+        }
+        return true;
+      };
+      const progress = director.progress();
+      const sceneIndex = Math.min(SCENE_COUNT, Math.floor(progress * SCENE_COUNT) + 1);
+      const rooms = win.__fardeenInteriorState?.() ?? {};
+      return {
+        signature: CINEMATIC_BUILD_SIGNATURE,
+        progress,
+        timelineTime: director.time(),
+        sceneIndex,
+        slab: world.handles.villa.slab.visible,
+        rebar: world.handles.villa.rebar.visible,
+        walls: world.handles.villa.walls.some((wall) => wall.visible),
+        columns: world.handles.villa.columns.some((column) => column.visible),
+        upper: world.handles.villa.upper.visible,
+        upperMass: world.handles.villa.upper.visible,
+        roof: world.handles.villa.roof.visible,
+        finishes: world.handles.villa.finishes.visible,
+        exteriorShell: world.handles.villa.exteriorShell.visible,
+        exteriorFacadeVisible: effectivelyVisible(facade),
+        upperLeftFacade: {
+          exists: true,
+          uuid: facade.uuid,
+          name: facade.name,
+          visible: facade.visible,
+          effectivelyVisible: effectivelyVisible(facade),
+          parent: facade.parent?.name ?? null,
+          parentVisible: facade.parent?.visible ?? null,
+          position: { x: facade.position.x, y: facade.position.y, z: facade.position.z },
+          rotation: { x: facade.rotation.x, y: facade.rotation.y, z: facade.rotation.z },
+          scale: { x: facade.scale.x, y: facade.scale.y, z: facade.scale.z },
+          bounds: {
+            min: { x: bounds.min.x, y: bounds.min.y, z: bounds.min.z },
+            max: { x: bounds.max.x, y: bounds.max.y, z: bounds.max.z },
+          },
+          meshCount,
+          renderOrder: {
+            min: Number.isFinite(minRenderOrder) ? minRenderOrder : null,
+            max: Number.isFinite(maxRenderOrder) ? maxRenderOrder : null,
+          },
+          materials: [...materials.values()],
+        },
+        windows: world.handles.villa.windowMesh.visible,
+        developedSite: world.handles.site.developed.visible,
+        gate: world.handles.gate.group.visible,
+        interior: world.handles.villa.interior.visible,
+        furniture: world.handles.villa.furnitureGroup.visible,
+        bedroomCutaway: world.handles.villa.interior.visible && Boolean(rooms.master),
+        rooms,
+      };
+    };
     win.__fardeenCameraState = () => ({
       position: { x: world.camera.position.x, y: world.camera.position.y, z: world.camera.position.z },
       target: { x: lookTarget.x, y: lookTarget.y, z: lookTarget.z },
     });
+    // Read/write camera seams let the visual acceptance harness inspect architectural geometry from
+    // required off-timeline angles (notably the front-left facade) without changing story cameras.
+    win.__fardeenSetCamera = ({ position, target }) => {
+      world.camera.position.set(position.x, position.y, position.z);
+      lookTarget.set(target.x, target.y, target.z);
+      invalidate();
+    };
 
     const onResize = () => {
       setSize();
@@ -217,11 +304,13 @@ export default function CinematicExperience() {
 
     return () => {
       disposed = true;
+      delete win.__fardeenBuildSignature;
       delete win.__fardeenSeek;
       delete win.__fardeenBenchmark;
       delete win.__fardeenInteriorState;
       delete win.__fardeenVisibilityState;
       delete win.__fardeenCameraState;
+      delete win.__fardeenSetCamera;
       observer.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('resize', onResize);

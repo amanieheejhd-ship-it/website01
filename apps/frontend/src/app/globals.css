@@ -53,7 +53,7 @@ body {
 }
 
 @layer components {
-  /* Skip link — visible only when focused. */
+  /* Skip link â€” visible only when focused. */
   .skip-link {
     @apply sr-only rounded-md bg-gold px-4 py-2 text-sm font-medium text-black;
   }
@@ -62,33 +62,38 @@ body {
   }
 
   /* Subtle vignette / grain seam where the Phase-6 R3F canvas will mount. */
+  /* Just a single subtle warm-gold glow on a TRANSPARENT base â€” the body ink + the one continuous
+     particle canvas show straight through, so the hero shares the exact same frame as every section
+     below it (no color step, no seam). */
   .hero-seam {
-    background:
-      radial-gradient(120% 80% at 50% 0%, rgba(200, 161, 90, 0.12), transparent 60%),
-      radial-gradient(100% 100% at 50% 100%, rgba(10, 10, 10, 0.9), #0a0a0a 70%);
+    background: radial-gradient(60% 45% at 50% 34%, rgba(200, 161, 90, 0.08), transparent 72%);
   }
 }
 
 /* Premium interactions stay scoped to intentional CTAs, navigation, and portfolio/service cards. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .premium-cta {
+  .premium-cta,
+  button {
     transition:
       transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      translate 240ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 240ms ease,
-      border-color 240ms ease;
+      border-color 240ms ease,
+      background-color 240ms ease,
+      color 240ms ease;
   }
   .premium-cta:hover {
     transform: scale(1.025);
     box-shadow: 0 12px 34px -14px rgba(200, 161, 90, 0.62);
   }
 
-  header nav a,
+  header a,
   footer nav a {
     position: relative;
     text-decoration: none;
   }
 
-  header nav a::after,
+  header a::after,
   footer nav a::after {
     position: absolute;
     right: 0;
@@ -103,8 +108,8 @@ body {
     transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  header nav a:hover::after,
-  header nav a:focus-visible::after,
+  header a:hover::after,
+  header a:focus-visible::after,
   footer nav a:hover::after,
   footer nav a:focus-visible::after {
     transform: scaleX(1);
@@ -129,3 +134,4 @@ body {
     transform: scale(1.03);
   }
 }
+

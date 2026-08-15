@@ -51,7 +51,7 @@ const fs = require('node:fs');
     const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
     fs.writeFileSync(file, Buffer.from(shot.data, 'base64'));
   };
-  const sceneKeys = ['empty-land','foundation','structure','villa','gate','foyer','living','dining','kitchen','powder-room','stairs','landing','master-bedroom','second-bedroom','marble-bathroom','terrace','reveal'];
+  const sceneKeys = ['empty-land','foundation','structure','villa-transformation','approach-gate','living-hall','kitchen-dining','staircase','master-bedroom','attached-washroom','second-bedroom','terrace','final-reveal'];
   const sectionProof = [];
   for (let index = 0; index < sceneKeys.length; index += 1) {
     const file = `artifacts/sections/${String(index + 1).padStart(2, '0')}-${sceneKeys[index]}.png`;
@@ -61,66 +61,58 @@ const fs = require('node:fs');
       .map((element) => element.textContent.trim().replace(/\s+/g, ' ')));
     sectionProof.push({ key: sceneKeys[index], visibleCaption, file });
   }
-  fs.copyFileSync('artifacts/sections/09-kitchen.png', 'artifacts/interior-kitchen.png');
-  fs.copyFileSync('artifacts/sections/13-master-bedroom.png', 'artifacts/interior-master.png');
-  fs.copyFileSync('artifacts/sections/15-marble-bathroom.png', 'artifacts/interior-bathroom.png');
+  fs.copyFileSync('artifacts/sections/07-kitchen-dining.png', 'artifacts/interior-kitchen.png');
+  fs.copyFileSync('artifacts/sections/09-master-bedroom.png', 'artifacts/interior-master.png');
+  fs.copyFileSync('artifacts/sections/10-attached-washroom.png', 'artifacts/interior-bathroom.png');
 
   const readVisibility = (progress) => page.evaluate((value) => {
     window.__fardeenSeek(value);
     return window.__fardeenVisibilityState();
   }, progress);
   const tracked = (state) => ({
+    upper: state.upper,
+    roof: state.roof,
+    exteriorShell: state.exteriorShell,
     interior: state.interior,
     furniture: state.furniture,
     ...Object.fromEntries(Object.entries(state.rooms).map(([name, visible]) => [`room:${name}`, visible])),
   });
   const topInitial = await readVisibility(0);
-  const downSamples = [];
-  for (let index = 0; index <= 17; index += 1) {
-    downSamples.push({ progress: index / 17, state: tracked(await readVisibility(index / 17)) });
-  }
-  const fullBuild = await readVisibility(1);
-  const reverseSamples = [];
-  for (let index = 17; index >= 0; index -= 1) {
-    reverseSamples.push({ progress: index / 17, state: tracked(await readVisibility(index / 17)) });
-  }
+  const approach = await readVisibility(4.8 / sceneKeys.length);
+  const interiorTransition = await readVisibility(5.5 / sceneKeys.length);
+  const terrace = await readVisibility(11.8 / sceneKeys.length);
+  const finalExterior = await readVisibility(12.8 / sceneKeys.length);
+  const reverseInterior = await readVisibility(11.8 / sceneKeys.length);
+  const reverseApproach = await readVisibility(4.8 / sceneKeys.length);
   const topAfterReverse = await readVisibility(0);
   await capture(0, 'artifacts/top-empty-after-reverse.png');
-  const midReverse = await readVisibility(.55);
-  const forwardAgain = await readVisibility(1);
-
-  const downFlicker = [];
-  const downSeen = new Map();
-  for (const sample of downSamples) {
-    for (const [name, visible] of Object.entries(sample.state)) {
-      if (downSeen.get(name) && !visible) downFlicker.push({ name, progress: sample.progress });
-      if (visible) downSeen.set(name, true);
-    }
-  }
-  const reverseResurrection = [];
-  const reverseHidden = new Map();
-  for (const sample of reverseSamples) {
-    for (const [name, visible] of Object.entries(sample.state)) {
-      if (reverseHidden.get(name) && visible) reverseResurrection.push({ name, progress: sample.progress });
-      if (!visible) reverseHidden.set(name, true);
-    }
-  }
   const topClear = (state) => Object.entries(state)
     .filter(([name]) => name !== 'rooms')
     .every(([, visible]) => visible === false)
     && Object.values(state.rooms).every((visible) => visible === false);
   const visibility = {
     topInitial,
-    fullBuild,
-    midReverse,
+    approach: tracked(approach),
+    interiorTransition: tracked(interiorTransition),
+    terrace: tracked(terrace),
+    finalExterior: tracked(finalExterior),
+    reverseInterior: tracked(reverseInterior),
+    reverseApproach: tracked(reverseApproach),
     topAfterReverse,
-    forwardAgain,
     topInitialClear: topClear(topInitial),
     topAfterReverseClear: topClear(topAfterReverse),
-    downFlicker,
-    reverseResurrection,
+    approachClosed: approach.upper && approach.roof && approach.exteriorShell && !approach.interior,
+    interiorCutaway: !interiorTransition.upper && !interiorTransition.roof && !interiorTransition.exteriorShell && interiorTransition.interior,
+    terraceCutaway: !terrace.upper && !terrace.roof && !terrace.exteriorShell && terrace.rooms.terrace,
+    finalClosed: finalExterior.upper && finalExterior.roof && finalExterior.exteriorShell
+      && !finalExterior.interior && !finalExterior.furniture
+      && Object.values(finalExterior.rooms).every((visible) => visible === false),
+    reverseRestoresTour: !reverseInterior.upper && !reverseInterior.roof && !reverseInterior.exteriorShell
+      && reverseInterior.interior && reverseInterior.rooms.terrace,
+    reverseRestoresApproach: reverseApproach.upper && reverseApproach.roof && reverseApproach.exteriorShell
+      && !reverseApproach.interior,
   };
-  await capture(0.965, 'artifacts/estate-finished-exterior.png');
+  await capture(12.8 / sceneKeys.length, 'artifacts/estate-finished-exterior.png');
   const perf = await page.evaluate(() => window.__fardeenBenchmark(650));
   const runtime = await page.evaluate(() => ({
     scrollSeek: typeof window.__fardeenSeek === 'function',

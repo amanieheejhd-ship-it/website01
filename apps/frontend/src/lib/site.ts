@@ -8,7 +8,7 @@ export const SITE = {
     'Ansari Space Craft is a full-solution construction company — home construction, interiors, aluminium & glass, ' +
     'ACP cladding, modular kitchens, steel fabrication and more, delivered end to end.',
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
-  email: 'ansarisparecraft@gmail.com',
+  email: 'ansarispacecraft@gmail.com',
   phone: '+91 62398 43731',
   locality: 'Zirakpur, Punjab, India',
   // Embeddable Google Map (no API key needed) + the shareable short link for "Get directions".

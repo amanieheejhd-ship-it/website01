@@ -49,7 +49,7 @@ describe('HandleQuotationStatusChanged', () => {
 
     expect(email.sent).toHaveLength(1);
     expect(email.sent[0].to).toBe('client@example.com');
-    expect(email.sent[0].subject).toBe('Your Fardeen quotation q-9 is now "sent"');
+    expect(email.sent[0].subject).toBe('Your Ansari Space Craft quotation q-9 is now "sent"');
     expect(email.sent[0].text).toContain('"draft"');
     expect(email.sent[0].text).toContain('"sent"');
     expect(repo.saved).toHaveLength(1);

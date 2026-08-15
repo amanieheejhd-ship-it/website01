@@ -4,7 +4,22 @@
     "rootDir": "src",
     "outDir": "./dist",
     "declaration": false,
-    "noEmit": false
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": {
+      "@fardeen/types": [
+        "../../dist/packages/types/src/index.d.ts"
+      ],
+      "@fardeen/shared": [
+        "../../dist/packages/shared/src/index.d.ts"
+      ],
+      "@fardeen/utils": [
+        "../../dist/packages/utils/src/index.d.ts"
+      ],
+      "@fardeen/config": [
+        "../../dist/packages/config/src/index.d.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts"

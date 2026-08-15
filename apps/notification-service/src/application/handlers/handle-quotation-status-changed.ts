@@ -20,7 +20,7 @@ export class HandleQuotationStatusChanged {
       payload: { quotationId, from, to },
       message: {
         to: email,
-        subject: `Your Fardeen quotation ${quotationId} is now "${to}"`,
+        subject: `Your Ansari Space Craft quotation ${quotationId} is now "${to}"`,
         text: `Your quotation request ${quotationId} moved from "${from}" to "${to}".`,
       },
     });

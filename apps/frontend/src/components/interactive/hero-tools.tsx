@@ -24,7 +24,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Construction',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z" />
         <path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
         <path d="M4 16v-3a6 6 0 0 1 6-6" />
@@ -35,7 +35,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Masonry',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="M14.5 6.5 18 3l3 3-3.5 3.5" />
         <path d="M16 8 5.6 13.2a1 1 0 0 0-.3 1.5l4 4a1 1 0 0 0 1.5-.3L16 8z" />
       </svg>
@@ -44,7 +44,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Finishing',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <rect x="2" y="9" width="20" height="6" rx="1" />
         <path d="M7 9v6M17 9v6" />
         <path d="M10.5 11h3v2h-3z" />
@@ -54,7 +54,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Drafting',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z" />
         <path d="M8.5 6.5 10 5M11.5 9.5 13 8M14.5 12.5 16 11M17.5 15.5 19 14" />
       </svg>
@@ -63,7 +63,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Structural',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="M5 21V3" />
         <path d="M3 21h4" />
         <path d="M5 4h15" />
@@ -76,7 +76,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Installation',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="m14 12-8.5 8.5a2.1 2.1 0 1 1-3-3L11 9" />
         <path d="M17.6 15 22 10.6" />
         <path d="M15 5.5 18.5 9l2-2a2.5 2.5 0 0 0-3.5-3.5z" />
@@ -86,7 +86,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Fabrication',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z" />
       </svg>
     ),
@@ -94,7 +94,7 @@ const TOOLS: Tool[] = [
   {
     label: 'Interiors',
     icon: (
-      <svg viewBox="0 0 24 24" {...S}>
+      <svg className="h-full w-full" viewBox="0 0 24 24" {...S}>
         <rect x="4" y="3" width="16" height="18" rx="1" />
         <path d="M12 3v18" />
         <path d="M9 10.5v2M15 10.5v2" />
@@ -156,14 +156,14 @@ export function HeroTools(): JSX.Element | null {
               transition={reduced ? { duration: 0 } : { delay: 0.15 + i * 0.09, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
               <m.div
-                className="flex items-center gap-3"
+                className="group pointer-events-auto flex items-center gap-3"
                 animate={reduced ? undefined : { y: [0, -8, 0] }}
                 transition={reduced ? undefined : { duration: 3.2 + i * 0.25, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
               >
-                <span className="whitespace-nowrap text-right font-sans text-[0.7rem] uppercase tracking-[0.22em] text-muted">
+                <span className="whitespace-nowrap text-right font-sans text-[0.7rem] uppercase tracking-[0.22em] text-muted transition-colors duration-200 group-hover:text-foreground">
                   {tool.label}
                 </span>
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-surface/50 text-gold shadow-[0_0_24px_-8px_rgba(200,161,90,0.5)] backdrop-blur-sm">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-surface/50 text-gold shadow-[0_0_24px_-8px_rgba(200,161,90,0.5)] backdrop-blur-sm transition-[border-color,background-color,box-shadow,color] duration-200 group-hover:border-gold/70 group-hover:bg-gold/15 group-hover:text-gold-light group-hover:shadow-[0_0_30px_-6px_rgba(200,161,90,0.85)]">
                   <span className="h-6 w-6">{tool.icon}</span>
                 </span>
               </m.div>

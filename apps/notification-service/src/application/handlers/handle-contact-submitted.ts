@@ -32,8 +32,8 @@ export class HandleContactSubmitted {
       payload: { contactId },
       message: {
         to: email,
-        subject: 'We received your message — Fardeen',
-        text: 'Thanks for reaching out to Fardeen. Our team will get back to you shortly.',
+        subject: 'We received your message — Ansari Space Craft',
+        text: 'Thanks for reaching out to Ansari Space Craft. Our team will get back to you shortly.',
       },
     });
 

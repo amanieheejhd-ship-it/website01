@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     update: {
       title: 'Home',
       status: 'published',
-      seoTitle: 'Fardeen — Cinematic Construction Experience',
+      seoTitle: 'Ansari Space Craft — We build the moment you walk in',
       seoDescription: 'Watch a luxury villa rise from empty land as you scroll.',
       seoOgImageMediaId: 'media-og-home',
     },
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
       slug: 'home',
       title: 'Home',
       status: 'published',
-      seoTitle: 'Fardeen — Cinematic Construction Experience',
+      seoTitle: 'Ansari Space Craft — We build the moment you walk in',
       seoDescription: 'Watch a luxury villa rise from empty land as you scroll.',
       seoOgImageMediaId: 'media-og-home',
     },

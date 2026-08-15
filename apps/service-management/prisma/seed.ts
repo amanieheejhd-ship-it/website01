@@ -36,7 +36,7 @@ async function main(): Promise<void> {
         slug,
         name,
         tagline,
-        description: `${name} — full-solution delivery by Fardeen.`,
+        description: `${name} — full-solution delivery by Ansari Space Craft.`,
         icon: slug,
         order,
         active: true,

@@ -12,7 +12,7 @@ const schema = z.object({
   SMTP_PORT: z.coerce.number().default(1025),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
-  MAIL_FROM: z.string().default('Fardeen <no-reply@fardeen.example>'),
+  MAIL_FROM: z.string().default('Ansari Space Craft <no-reply@fardeen.example>'),
   SALES_INBOX: z.string().default('sales@fardeen.example'),
   NOTIFICATION_GROUP: z.string().default('notification'),
   NOTIFICATION_CONSUMER: z.string().default('notification-1'),

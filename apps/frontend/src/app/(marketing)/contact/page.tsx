@@ -3,28 +3,31 @@ import { Container, Section } from '@fardeen/ui';
 import { PageHeader } from '../../../components/layout/page-header';
 import { SectionIntro } from '../../../components/sections/section-intro';
 import { ContactForm } from '../../../components/forms/contact-form';
-import { QuotationForm } from '../../../components/forms/quotation-form';
-import { getServices } from '../../../lib/api';
 import { SITE } from '../../../lib/site';
 
-export const revalidate = 60;
-
 export const metadata: Metadata = {
-  title: 'Contact & Quotation',
+  title: 'Contact',
   description:
-    'Get in touch with Ansari Space Craft or request a detailed, tailored quotation for your construction or interior project.',
+    'Tell Ansari Space Craft about your construction or interior project and our team will help you plan the right next steps.',
   alternates: { canonical: '/contact' },
 };
 
-export default async function ContactPage() {
-  // Server-fetch the service list so the quotation multiselect is present in the SSR HTML.
-  const services = await getServices().catch(() => ({ data: [] }));
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const service = typeof params.service === 'string' ? params.service.trim() : '';
+  const requestedSubject = typeof params.subject === 'string' ? params.subject.trim() : '';
+  const initialSubject = service || requestedSubject;
+
   return (
     <>
       <PageHeader
         eyebrow="Get in touch"
         title="Let's build something remarkable"
-        lead="Send us a message for a quick reply, or request a detailed quotation with your scope and budget."
+        lead="Tell us about your project and our team will get back to you with the right next steps."
       >
         <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
           <a href={`mailto:${SITE.email}`} className="hover:text-foreground">
@@ -45,19 +48,7 @@ export default async function ContactPage() {
             title="Send a quick message"
             lead="For general enquiries and callbacks. We usually reply within one business day."
           />
-          <ContactForm />
-        </Container>
-      </Section>
-
-      <Section aria-labelledby="quote-form-heading" className="border-t border-white/5 bg-surface/30">
-        <Container size="wide" className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-          <SectionIntro
-            eyebrow="Request a quotation"
-            headingId="quote-form-heading"
-            title="Get a tailored estimate"
-            lead="Pick the services you need, share your budget and timeline, and we'll prepare a detailed quotation."
-          />
-          <QuotationForm initialServices={services.data} />
+          <ContactForm initialSubject={initialSubject} />
         </Container>
       </Section>
     </>

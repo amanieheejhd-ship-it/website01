@@ -18,7 +18,7 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
   ({ as: Tag = 'div', size = 'default', className, ...props }, ref) => (
     <Tag
       ref={ref}
-      className={cn('mx-auto w-full px-6 sm:px-8 lg:px-10', widths[size], className)}
+      className={cn('mx-auto w-full px-5 sm:px-8 lg:px-10', widths[size], className)}
       {...props}
     />
   ),

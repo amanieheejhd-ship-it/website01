@@ -67,12 +67,32 @@ function toQueryString(query?: Query): string {
   return s ? `?${s}` : '';
 }
 
+/** A down/unreachable backend must fail FAST into the callers' safe() fallbacks — never hang an RSC
+ *  render or a static prerender (which otherwise aborts the whole `next build`). */
+const API_TIMEOUT_MS = 3000;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, init);
+    // Race the fetch against a hard timer. A filtered/dropped backend port can stall the TCP connect
+    // for far longer than the abort signal takes to fire (undici may not honour the abort mid-connect
+    // on every platform), so the race is what actually guarantees we bail on time; the dangling socket
+    // errors out harmlessly afterwards.
+    res = await Promise.race([
+      fetch(`${API_BASE_URL}${path}`, {
+        ...init,
+        signal: init?.signal ?? controller.signal,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`API timeout after ${API_TIMEOUT_MS}ms`)), API_TIMEOUT_MS + 250),
+      ),
+    ]);
   } catch (cause) {
     throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the API', [String(cause)]);
+  } finally {
+    clearTimeout(timer);
   }
   const json: unknown = await res.json().catch(() => null);
   if (!res.ok) {

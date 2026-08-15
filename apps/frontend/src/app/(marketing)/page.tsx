@@ -18,9 +18,12 @@ import { ServicesSection } from '../../components/sections/services-section';
 import { ProjectsSection } from '../../components/sections/projects-section';
 import { TestimonialsSection } from '../../components/sections/testimonials-section';
 import { ContactSection } from '../../components/sections/contact-section';
+import { AnsariFaqSection } from '../../components/sections/ansari-faq-section';
 import { JsonLd } from '../../components/seo/json-ld';
 
-// Marketing home content changes rarely; revalidate hourly (ISR) rather than every minute.
+// Static shell + hourly ISR: the CMS data degrades gracefully (fail-fast fetch → safe() fallbacks),
+// so the page prerenders instantly at build and serves in ~0.2s. The heavy three.js/GSAP cinematic
+// is client-only and hydrates after paint, so it never touches the server render.
 export const revalidate = 3600;
 
 /** Degrade gracefully — a single service being down must not blank the whole page. */
@@ -87,7 +90,9 @@ export default async function HomePage() {
       <ServicesSection offerings={services.data} limit={6} />
       <ProjectsSection projects={projects.data} included={projects.included} limit={6} />
       <TestimonialsSection testimonials={testimonials.data} included={testimonials.included} />
-      <ContactSection />
+      <AnsariFaqSection>
+        <ContactSection />
+      </AnsariFaqSection>
 
       {services.data.length > 0 ? (
         <JsonLd

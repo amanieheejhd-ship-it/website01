@@ -18,7 +18,8 @@ const DEFAULTS: SubmitContactInput = {
   source: 'website',
 };
 
-export function ContactForm() {
+export function ContactForm({ initialSubject = '' }: { initialSubject?: string }) {
+  const defaultValues: SubmitContactInput = { ...DEFAULTS, subject: initialSubject };
   const {
     register,
     handleSubmit,
@@ -26,7 +27,7 @@ export function ContactForm() {
     formState: { errors },
   } = useForm<SubmitContactInput>({
     resolver: zodResolver(submitContactSchema),
-    defaultValues: DEFAULTS,
+    defaultValues,
   });
 
   // Stable per-submission key: a retry after an ambiguous failure reuses the SAME key so the
@@ -40,7 +41,7 @@ export function ContactForm() {
     },
     onSuccess: () => {
       idempotencyKey.current = null;
-      reset(DEFAULTS);
+      reset(defaultValues);
     },
   });
 

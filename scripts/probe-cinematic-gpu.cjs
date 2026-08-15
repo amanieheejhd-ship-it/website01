@@ -1,5 +1,7 @@
 const { chromium } = require('@playwright/test');
 const fs = require('node:fs');
+const baseUrl = process.env.CINEMATIC_VERIFY_URL || 'http://127.0.0.1:3000';
+const benchmarkMs = Number(process.env.CINEMATIC_BENCHMARK_MS || 2500);
 
 (async () => {
   const browser = await chromium.launch({
@@ -8,7 +10,7 @@ const fs = require('node:fs');
   });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('http://127.0.0.1:3000', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.mouse.move(180, 180);
   await page.mouse.click(180, 180);
   await page.mouse.wheel(0, 20);
@@ -37,7 +39,10 @@ const fs = require('node:fs');
   ]) {
     await page.evaluate((progress) => window.__fardeenSeek(progress), sample.progress);
     await page.waitForTimeout(700);
-    const perf = await page.evaluate(() => window.__fardeenBenchmark(2500));
+    // Compile the visible room/material shaders before measuring steady-state frame throughput. A
+    // cold first frame can include multi-second D3D shader compilation and is not an FPS sample.
+    await page.evaluate(() => window.__fardeenBenchmark(450));
+    const perf = await page.evaluate((durationMs) => window.__fardeenBenchmark(durationMs), benchmarkMs);
     samples.push({ ...sample, ...perf });
   }
   const perf = samples.reduce((worst, sample) => sample.fps < worst.fps ? sample : worst);

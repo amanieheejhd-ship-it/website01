@@ -56,7 +56,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<Pa
 
   return (
     <article>
-      <div className="border-b border-white/10 bg-surface/30">
+      <div>
         <Container size="wide" className="py-16 sm:py-20">
           <Link href="/projects" className="text-sm text-muted transition-colors hover:text-foreground">
             ← All projects
@@ -127,7 +127,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<Pa
 
           <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gold/25 bg-gold/[0.06] p-8">
             <p className="font-display text-2xl text-foreground">Planning something similar?</p>
-            <Link href="/contact" className={buttonVariants({ size: 'lg' })}>
+            <Link href="/contact?subject=Request%20a%20quotation" className={buttonVariants({ size: 'lg' })}>
               Request a quotation
             </Link>
           </div>

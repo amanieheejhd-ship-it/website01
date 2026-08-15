@@ -30,7 +30,7 @@ export function ContactSection() {
             <p>{SITE.locality}</p>
           </RevealText>
           <RevealText as="div" delay={0.05}>
-            <Link href="/contact" className={buttonVariants({ variant: 'outline' })}>
+            <Link href="/contact?subject=Request%20a%20quotation" className={buttonVariants({ variant: 'outline' })}>
               Request a full quotation
             </Link>
           </RevealText>

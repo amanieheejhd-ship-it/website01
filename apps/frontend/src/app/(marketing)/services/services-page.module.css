@@ -1,0 +1,80 @@
+.page {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(200, 161, 90, .08), transparent 24rem),
+    radial-gradient(circle, rgba(200, 161, 90, .11) 1px, transparent 1.2px);
+  background-size: auto, 52px 52px;
+}
+
+.hero {
+  position: relative;
+  padding: clamp(6rem, 11vw, 9rem) 0 clamp(4.5rem, 8vw, 7rem);
+}
+
+.hero::after {
+  position: absolute;
+  right: -8rem;
+  bottom: 2rem;
+  width: min(46vw, 42rem);
+  height: 1px;
+  content: '';
+  background: linear-gradient(90deg, transparent, rgba(200, 161, 90, .55), transparent);
+  transform: rotate(-24deg);
+  transform-origin: center;
+}
+
+.detail:nth-child(even) .detailIntro {
+  order: 2;
+}
+
+.detail:nth-child(even) .detailBody {
+  order: 1;
+}
+
+.indexLink {
+  transition: color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.indexLink:hover,
+.indexLink:focus-visible {
+  color: #e5c987;
+  border-color: rgba(200, 161, 90, .7);
+  transform: translateY(-2px);
+}
+
+.serviceNumber {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(200, 161, 90, .56);
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary {
+  list-style: none;
+}
+
+@media (max-width: 767px) {
+  .detail:nth-child(even) .detailIntro,
+  .detail:nth-child(even) .detailBody {
+    order: initial;
+  }
+
+  .indexScroller {
+    margin-right: -1.25rem;
+    padding-right: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .indexScroller::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indexLink {
+    transition: none;
+  }
+}

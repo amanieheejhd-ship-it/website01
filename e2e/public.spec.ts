@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Public marketing site', () => {
   test('home renders the hero + primary nav with live content', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/Fardeen/i);
+    await expect(page).toHaveTitle(/Ansari Space Craft/i);
     await expect(page.locator('#hero-heading')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
     // live data: the page links out to the real sections

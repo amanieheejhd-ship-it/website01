@@ -1,21 +1,20 @@
 import type { Metadata } from 'next';
 import type { ServiceOfferingDto } from '@fardeen/types';
-import { buttonVariants, Container, Section } from '@fardeen/ui';
+import { buttonVariants, Container, Heading, Section } from '@fardeen/ui';
 import Link from 'next/link';
+import { JsonLd } from '../../../components/seo/json-ld';
+import { CORE_SERVICES, SERVICES_FAQS } from '../../../components/services/services-content';
 import { getServices, type ListResponse } from '../../../lib/api';
 import { serviceJsonLd } from '../../../lib/seo';
 import { SITE } from '../../../lib/site';
-import { JsonLd } from '../../../components/seo/json-ld';
-import { PageHeader } from '../../../components/layout/page-header';
-import { ServiceCard } from '../../../components/services/service-card';
+import styles from './services-page.module.css';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Services',
+  title: { absolute: `Construction & Interior Services | ${SITE.name}` },
   description:
-    'Twelve construction and interior disciplines delivered in-house by Ansari Space Craft — home construction, ' +
-    'aluminium & glass, ACP cladding, modular kitchens, interiors, steel fabrication and more.',
+    'Complete construction, interiors, modular kitchens, aluminium, glass, ACP cladding, steel fabrication and renovation services from Ansari Space Craft.',
   alternates: { canonical: '/services' },
 };
 
@@ -27,66 +26,199 @@ async function safeServices(): Promise<ListResponse<ServiceOfferingDto>> {
   }
 }
 
+const STEPS = [
+  ['01', 'Understand the project', 'We listen to the brief, priorities, intended use, budget direction and desired finish.'],
+  ['02', 'Site visit & scope', 'Measurements and existing conditions turn the initial conversation into a defined work scope.'],
+  ['03', 'Estimate & planning', 'The required trades, materials, sequencing and commercial proposal are coordinated before execution.'],
+  ['04', 'Execution & coordination', 'Site teams and specialist packages work to one practical sequence with regular decisions tracked.'],
+  ['05', 'Finishing & handover', 'Final surfaces, fittings and snag items are reviewed before the completed scope is handed over.'],
+] as const;
+
+const PROJECT_TYPES = [
+  ['Residential', 'Villas', 'Independent houses', 'Apartments', 'Renovations'],
+  ['Commercial', 'Offices', 'Retail', 'Showrooms', 'Commercial interiors'],
+  ['Specialist works', 'Facades', 'Glass & aluminium', 'Fabrication', 'Modular installations'],
+] as const;
+
+const QUALITY_AREAS = [
+  'Structural and civil materials',
+  'Hardware and moving systems',
+  'Aluminium and glass assemblies',
+  'Boards, laminates and surfaces',
+  'Flooring and sanitary fittings',
+  'Electrical and paint systems',
+] as const;
+
+const REASONS = [
+  ['One accountable team', 'A single execution relationship across the agreed scope.'],
+  ['Coordinated trades', 'Civil, services, fabrication and finishes planned in sequence.'],
+  ['Design-to-execution continuity', 'Practical detailing stays connected to what is built on site.'],
+  ['Detailed finishing', 'Junctions, alignment and final fit receive the same attention as major work.'],
+  ['Clear project scope', 'Responsibilities and inclusions are defined before work progresses.'],
+  ['Residential + commercial', 'Capability across homes, renovations, offices, retail and specialist packages.'],
+] as const;
+
 export default async function ServicesPage() {
-  const { data: offerings } = await safeServices();
+  const { data: cmsOfferings } = await safeServices();
 
   return (
-    <>
-      <PageHeader
-        eyebrow="What we do"
-        title="Full-solution construction, foundation to finish"
-        lead="Every discipline your project needs, delivered by one accountable team — so quality and timelines never fall between vendors."
-      />
-
-      <Section aria-labelledby="services-list-heading">
+    <div className={styles.page}>
+      <header className={styles.hero}>
         <Container size="wide">
-          <h2 id="services-list-heading" className="sr-only">
-            All services
-          </h2>
-          {offerings.length > 0 ? (
-            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {offerings.map((o) => (
-                <li key={o.id}>
-                  <ServiceCard offering={o} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted">
-              Our services are being loaded. Please check back shortly or{' '}
-              <Link href="/contact" className="text-gold underline">
-                get in touch
-              </Link>
-              .
-            </p>
-          )}
-        </Container>
-      </Section>
-
-      <Section spacing="sm" aria-label="Get started">
-        <Container size="wide" className="flex flex-wrap items-center justify-between gap-6 rounded-xl border border-gold/25 bg-gold/[0.06] p-8">
-          <p className="font-display text-2xl text-foreground">
-            Not sure which services you need?
+          <p className="font-display text-xs font-medium uppercase tracking-[0.32em] text-gold">What we do</p>
+          <h1 className="mt-6 max-w-5xl text-balance font-display text-4xl font-medium leading-[1.02] text-foreground sm:text-5xl lg:text-7xl">
+            Full-solution construction,
+            <br />
+            foundation to finish
+          </h1>
+          <p className="mt-7 max-w-3xl text-lg leading-relaxed text-muted sm:text-xl">
+            One accountable team for construction, interiors, fabrication, finishing and specialist building works.
           </p>
-          <Link href="/contact" className={buttonVariants({ size: 'lg' })}>
-            Request a quotation
-          </Link>
+          <p className="mt-4 max-w-3xl border-l border-gold/50 pl-5 leading-relaxed text-muted/80">
+            From civil structure and MEP to interiors, facades and final detailing—coordinated under one execution team.
+          </p>
+        </Container>
+      </header>
+
+      <Section spacing="sm" aria-labelledby="service-index-heading">
+        <Container size="wide">
+          <div className="border-y border-gold/20 py-8 sm:py-10">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-gold">Service disciplines</p>
+                <Heading id="service-index-heading" size="md" className="mt-3">Twelve trades. One accountable team.</Heading>
+              </div>
+              <p className="max-w-xl text-sm leading-relaxed text-muted">Select a discipline or continue through the complete capability overview.</p>
+            </div>
+            <nav aria-label="Service index" className={`${styles.indexScroller} mt-8`}>
+              <ol className="grid min-w-[44rem] grid-cols-4 gap-3 md:min-w-0 lg:grid-cols-6">
+                {CORE_SERVICES.map((service) => (
+                  <li key={service.slug}>
+                    <a className={`${styles.indexLink} flex min-h-16 items-center gap-3 border-b border-white/10 px-2 py-3 text-sm text-muted`} href={`#${service.slug}`}>
+                      <span className="font-display text-gold">{service.number}</span>
+                      <span>{service.shortName}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </div>
         </Container>
       </Section>
 
-      {offerings.length > 0 ? (
-        <JsonLd data={offerings.map((o) => serviceJsonLd(o))} />
-      ) : null}
-      <JsonLd
-        data={{
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
-            { '@type': 'ListItem', position: 2, name: 'Services', item: `${SITE.url}/services` },
-          ],
-        }}
-      />
-    </>
+      <div aria-label="Detailed services">
+        {CORE_SERVICES.map((service) => (
+          <section id={service.slug} key={service.slug} className={`${styles.detail} scroll-mt-20 py-16 sm:py-24`} aria-labelledby={`${service.slug}-heading`}>
+            <Container size="wide" className="grid items-start gap-10 border-t border-gold/20 pt-12 md:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] md:gap-16 lg:gap-24">
+              <div className={styles.detailIntro}>
+                <span aria-hidden="true" className={`${styles.serviceNumber} font-display text-7xl leading-none sm:text-8xl`}>{service.number}</span>
+                <h2 id={`${service.slug}-heading`} className="mt-7 max-w-xl font-display text-3xl font-medium leading-tight text-foreground sm:text-4xl lg:text-5xl">{service.title}</h2>
+                <p className="mt-5 max-w-xl text-lg leading-relaxed text-gold/90">{service.positioning}</p>
+              </div>
+              <div className={`${styles.detailBody} md:pt-16`}>
+                <p className="max-w-2xl text-base leading-8 text-muted sm:text-lg">{service.description}</p>
+                <div className="mt-9 grid gap-8 sm:grid-cols-2">
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">What we handle</h3>
+                    <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
+                      {service.includes.map((item) => <li key={item} className="flex gap-3"><span aria-hidden="true" className="text-gold">—</span><span>{item}</span></li>)}
+                    </ul>
+                  </div>
+                  <div className="space-y-7">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">Typical applications</h3>
+                      <p className="mt-4 text-sm leading-7 text-muted">{service.applications}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">Materials & scope</h3>
+                      <p className="mt-4 text-sm leading-7 text-muted">{service.materials}</p>
+                    </div>
+                  </div>
+                </div>
+                <Link href={`/contact?service=${encodeURIComponent(service.title)}`} className={`${buttonVariants({ variant: 'outline' })} mt-9`}>Discuss this service</Link>
+              </div>
+            </Container>
+          </section>
+        ))}
+      </div>
+
+      <Section aria-labelledby="turnkey-heading" className="border-y border-gold/20 bg-gold/[0.035]">
+        <Container size="wide" className="grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-gold">Turnkey delivery</p>
+            <Heading id="turnkey-heading" className="mt-4">One project.<br />One coordinated team.</Heading>
+          </div>
+          <div>
+            <p className="max-w-3xl text-lg leading-8 text-muted">Instead of separately managing civil contractors, electricians, plumbers, fabricators, interior teams and finishing vendors, Ansari Space Craft can coordinate the required scope through one execution workflow.</p>
+            <ol className="mt-10 grid grid-cols-5 border-y border-gold/20 py-6 text-center text-xs uppercase tracking-[0.12em] text-foreground sm:text-sm sm:tracking-[0.2em]">
+              {['Plan', 'Build', 'Install', 'Finish', 'Handover'].map((item, index) => <li key={item} className="relative px-1">{item}{index < 4 ? <span aria-hidden="true" className="absolute -right-1 text-gold">→</span> : null}</li>)}
+            </ol>
+          </div>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="process-heading">
+        <Container size="wide">
+          <p className="text-xs uppercase tracking-[0.28em] text-gold">How we work</p>
+          <Heading id="process-heading" className="mt-4">A clear route from brief to handover</Heading>
+          <ol className="mt-12 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 md:grid-cols-5">
+            {STEPS.map(([number, title, copy]) => <li key={number} className="bg-background p-6 lg:p-8"><span className="font-display text-2xl text-gold">{number}</span><h3 className="mt-8 text-lg font-medium text-foreground">{title}</h3><p className="mt-3 text-sm leading-7 text-muted">{copy}</p></li>)}
+          </ol>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="quality-heading" className="bg-white/[0.018]">
+        <Container size="wide" className="grid gap-12 lg:grid-cols-2 lg:gap-24">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-gold">Material & quality approach</p>
+            <Heading id="quality-heading" className="mt-4">Specified for the place it has to perform</Heading>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-muted">Material selection is balanced across use, exposure, maintenance, finish and the agreed budget. Good execution begins beneath the visible surface—with the right substrate, fixing, alignment and preparation.</p>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {QUALITY_AREAS.map((item, index) => <li key={item} className="flex min-h-24 items-end justify-between border border-white/10 p-5 text-sm text-foreground"><span>{item}</span><span className="font-display text-gold/60">0{index + 1}</span></li>)}
+          </ul>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="project-types-heading">
+        <Container size="wide">
+          <p className="text-xs uppercase tracking-[0.28em] text-gold">Project types</p>
+          <Heading id="project-types-heading" className="mt-4">Capability across complete spaces and specialist work</Heading>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {PROJECT_TYPES.map(([title, ...items], index) => <article key={title} className="border-t border-gold/40 bg-white/[0.02] p-7 sm:p-9"><span className="font-display text-4xl text-gold/40">0{index + 1}</span><h3 className="mt-8 font-display text-3xl text-foreground">{title}</h3><ul className="mt-6 space-y-3 text-muted">{items.map((item) => <li key={item} className="border-b border-white/10 pb-3">{item}</li>)}</ul></article>)}
+          </div>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="why-heading">
+        <Container size="wide" className="grid gap-12 lg:grid-cols-[.65fr_1.35fr]">
+          <div><p className="text-xs uppercase tracking-[0.28em] text-gold">Why Ansari Space Craft</p><Heading id="why-heading" className="mt-4">Continuity where projects usually fragment</Heading></div>
+          <div className="grid gap-x-10 sm:grid-cols-2">
+            {REASONS.map(([title, copy]) => <article key={title} className="border-b border-gold/20 py-7"><h3 className="text-lg font-medium text-foreground">{title}</h3><p className="mt-3 text-sm leading-7 text-muted">{copy}</p></article>)}
+          </div>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="services-faq-heading" className="border-y border-gold/20 bg-white/[0.015]">
+        <Container size="wide" className="grid gap-12 lg:grid-cols-[.7fr_1.3fr] lg:gap-24">
+          <div><p className="text-xs uppercase tracking-[0.28em] text-gold">Services FAQ</p><Heading id="services-faq-heading" className="mt-4">Before your project begins</Heading><p className="mt-5 max-w-md leading-7 text-muted">Practical answers about scope, combinations and how to request an estimate.</p></div>
+          <div className={styles.faq}>
+            {SERVICES_FAQS.map(([question, answer]) => <details key={question} className="group border-b border-gold/20"><summary className="flex min-h-20 cursor-pointer items-center justify-between gap-5 py-5 text-lg font-medium text-foreground transition-colors hover:text-gold"><span>{question}</span><span aria-hidden="true" className="text-2xl font-light text-gold group-open:rotate-45">+</span></summary><p className="max-w-2xl pb-7 pr-10 text-sm leading-7 text-muted">{answer}</p></details>)}
+          </div>
+        </Container>
+      </Section>
+
+      <Section aria-labelledby="services-cta-heading">
+        <Container size="wide">
+          <div className="relative overflow-hidden rounded-xl border border-gold/30 bg-gold/[0.06] p-8 sm:p-12 lg:flex lg:items-end lg:justify-between lg:gap-12 lg:p-16">
+            <div><p className="text-xs uppercase tracking-[0.28em] text-gold">Start a conversation</p><Heading id="services-cta-heading" className="mt-4 max-w-3xl">Not sure where your project should begin?</Heading><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">Share your site, requirements and approximate scope. We’ll help identify the right combination of services for your project.</p></div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:flex-none"><Link href="/contact?subject=Request%20a%20quotation" className={`${buttonVariants({ size: 'lg' })} w-full sm:w-auto`}>Request a quotation</Link><Link href="/contact" className={`${buttonVariants({ size: 'lg', variant: 'outline' })} w-full sm:w-auto`}>Contact us</Link></div>
+          </div>
+        </Container>
+      </Section>
+
+      {cmsOfferings.length > 0 ? <JsonLd data={cmsOfferings.map((offering) => serviceJsonLd(offering))} /> : null}
+      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url }, { '@type': 'ListItem', position: 2, name: 'Services', item: `${SITE.url}/services` }] }} />
+    </div>
   );
 }

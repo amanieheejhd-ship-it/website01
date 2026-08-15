@@ -10,7 +10,7 @@ import { MagneticCard } from '../motion/magnetic-card';
  */
 export function Hero({ headline, sub }: { headline: string; sub: string }) {
   return (
-    <section aria-labelledby="hero-heading" className="hero-seam relative flex min-h-[86vh] items-center">
+    <section aria-labelledby="hero-heading" className="hero-seam relative flex min-h-[86svh] items-center">
       <div
         data-phase6-canvas-slot
         aria-hidden="true"
@@ -18,21 +18,21 @@ export function Hero({ headline, sub }: { headline: string; sub: string }) {
       />
       {/* Decorative right-side construction cluster (desktop only, reduced-motion static). */}
       <HeroTools />
-      <Container size="wide" className="relative z-10 py-24">
+      <Container size="wide" className="relative z-10 py-20 sm:py-24">
         <div className="max-w-3xl space-y-6">
           <Eyebrow>Full-solution construction · {`Foundation to finish`}</Eyebrow>
           <Heading as="h1" id="hero-heading" size="xl" className="text-balance">
             {headline}
           </Heading>
           <Lead>{sub}</Lead>
-          <div className="flex flex-wrap gap-4 pt-2">
-            <MagneticCard>
-              <Link href="/contact" className={`${buttonVariants({ size: 'lg' })} premium-cta`}>
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:gap-4">
+            <MagneticCard className="w-full sm:w-auto">
+              <Link href="/contact" className={`${buttonVariants({ size: 'lg' })} premium-cta w-full sm:w-auto`}>
                 Start your project
               </Link>
             </MagneticCard>
-            <MagneticCard>
-              <Link href="/projects" className={`${buttonVariants({ size: 'lg', variant: 'outline' })} premium-cta`}>
+            <MagneticCard className="w-full sm:w-auto">
+              <Link href="/projects" className={`${buttonVariants({ size: 'lg', variant: 'outline' })} premium-cta w-full sm:w-auto`}>
                 View our work
               </Link>
             </MagneticCard>
