@@ -70,7 +70,7 @@ apps/frontend/tsconfig.tsbuildinfo
 
 # Local verification / test artifacts
 artifacts/
-cinematic-final-fix-snapshot.txt
+cinematic-final-fix-snapshot.txt 
 # Backup files
 *.bak
 *.backup
