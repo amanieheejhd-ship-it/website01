@@ -1,7 +1,14 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import * as THREE from 'three';
-import { OPENING_CAMERA, PALETTE, SCENES } from './scenes';
+import {
+  OPENING_CAMERA,
+  PALETTE,
+  PORTRAIT_DEFAULT_TWEAK,
+  PORTRAIT_TWEAKS,
+  SCENES,
+  type CameraKey,
+} from './scenes';
 import type { WorldHandles } from './world';
 
 const WARM_STONE = new THREE.Color(0xdad4c8);
@@ -23,13 +30,36 @@ export function createDirector(opts: {
   spacer: HTMLElement;
   copyEls: HTMLElement[];
   invalidate: () => void;
+  /** Portrait framing (aspect < ~0.75): bake per-scene dolly-back/raise so every scene's subject
+   *  fits the upright frame (see PORTRAIT_TWEAKS). The caller rebuilds the director on rotation. */
+  portrait?: boolean;
 }): { seek: (p: number) => void; progress: () => number; time: () => number; dispose: () => void } {
-  const { camera, handles, lookTarget, spacer, copyEls, invalidate } = opts;
+  const { camera, handles, lookTarget, spacer, copyEls, invalidate, portrait = false } = opts;
   const { env, villa, site } = handles;
 
-  // Initial camera + look target + palette (dawn).
-  camera.position.set(OPENING_CAMERA.pos.x, OPENING_CAMERA.pos.y, OPENING_CAMERA.pos.z);
-  lookTarget.set(OPENING_CAMERA.target.x, OPENING_CAMERA.target.y, OPENING_CAMERA.target.z);
+  /** Portrait compensation: dolly back along the key's own view axis + raise (+ optional aim lift). */
+  const adjustKey = (key: CameraKey, sceneId: number): CameraKey => {
+    if (!portrait) return key;
+    const tweak = PORTRAIT_TWEAKS[sceneId] ?? PORTRAIT_DEFAULT_TWEAK;
+    const dir = new THREE.Vector3(
+      key.pos.x - key.target.x,
+      key.pos.y - key.target.y,
+      key.pos.z - key.target.z,
+    ).normalize();
+    return {
+      pos: {
+        x: key.pos.x + dir.x * tweak.back,
+        y: key.pos.y + dir.y * tweak.back + tweak.up,
+        z: key.pos.z + dir.z * tweak.back,
+      },
+      target: { ...key.target, y: key.target.y + (tweak.aimUp ?? 0) },
+    };
+  };
+
+  // Initial camera + look target + palette (dawn). The opening shares Scene 1's portrait framing.
+  const opening = adjustKey(OPENING_CAMERA, 1);
+  camera.position.set(opening.pos.x, opening.pos.y, opening.pos.z);
+  lookTarget.set(opening.target.x, opening.target.y, opening.target.z);
   env.skyMat.uniforms.uTop.value.set(PALETTE.skyTop[0]);
   env.skyMat.uniforms.uBottom.value.set(PALETTE.skyBottom[0]);
   env.fog.color.set(PALETTE.fog[0]);
@@ -123,7 +153,7 @@ export function createDirector(opts: {
     });
     master = tl;
 
-    // Camera path: OPENING → each scene keyframe over its 1-unit window.
+    // Camera path: OPENING → each scene keyframe over its 1-unit window (portrait-adjusted).
     SCENES.forEach((s, idx) => {
       const route = s.route;
       if (route?.length) {
@@ -131,14 +161,16 @@ export function createDirector(opts: {
         route.forEach((waypoint, waypointIndex) => {
           const duration = Math.max(.001, waypoint.at - previousAt);
           const ease = waypointIndex === route.length - 1 ? 'power1.out' : 'power1.inOut';
-          tl.to(camera.position, { ...waypoint.pos, duration, ease }, idx + previousAt);
-          tl.to(lookTarget, { ...waypoint.target, duration, ease }, idx + previousAt);
+          const key = adjustKey(waypoint, s.id);
+          tl.to(camera.position, { ...key.pos, duration, ease }, idx + previousAt);
+          tl.to(lookTarget, { ...key.target, duration, ease }, idx + previousAt);
           previousAt = waypoint.at;
         });
       } else {
         // Arrive during the first part of the window, then hold a clean composed shot for its caption.
-        tl.to(camera.position, { ...s.camera.pos, duration: 0.58, ease: s.ease }, idx);
-        tl.to(lookTarget, { ...s.camera.target, duration: 0.58, ease: s.ease }, idx);
+        const key = adjustKey(s.camera, s.id);
+        tl.to(camera.position, { ...key.pos, duration: 0.58, ease: s.ease }, idx);
+        tl.to(lookTarget, { ...key.target, duration: 0.58, ease: s.ease }, idx);
       }
     });
 
@@ -182,16 +214,32 @@ export function createDirector(opts: {
     tl.to(handles.gate.right.rotation, { y: Math.PI * 0.62, duration: 0.6, ease: 'power2.inOut' }, 4.2);
 
     // Scene 6 [5,6]: THE MAIN DOOR OPENS and the tour steps straight into the living hall.
-    tl.to(villa.mainDoor.rotation, { y: -1.95, duration: 0.24, ease: 'power2.inOut' }, 5.02);
+    // Portrait: the door opens EARLIER and FASTER — a flat panel must never fill the upright frame
+    // for more than a beat while the camera passes through.
+    if (portrait) {
+      tl.to(villa.mainDoor.rotation, { y: -1.95, duration: 0.1, ease: 'power2.out' }, 4.96);
+    } else {
+      tl.to(villa.mainDoor.rotation, { y: -1.95, duration: 0.24, ease: 'power2.inOut' }, 5.02);
+    }
 
     // Scene 8 [7,8]: the ground-floor guest suite. Both doors stay CLOSED through the hall + kitchen
     // (their tweens have not started yet, so the zero-state 0 holds). The bedroom door swings inward as
     // the camera reaches the doorway and shuts again as the camera leaves; the ensuite door opens for
     // the washroom leg and closes on the way out. Absolute-position tweens keep this reverse-scrub safe.
-    tl.to(villa.groundBedroomDoor.rotation, { y: 1.32, duration: 0.16, ease: 'power2.out' }, 7.14); // open
-    tl.to(villa.groundBathDoor.rotation, { y: -1.30, duration: 0.10, ease: 'power2.out' }, 7.48); // open
-    tl.to(villa.groundBathDoor.rotation, { y: 0, duration: 0.10, ease: 'power2.in' }, 7.62); // close ensuite
-    tl.to(villa.groundBedroomDoor.rotation, { y: 0, duration: 0.14, ease: 'power2.in' }, 7.74); // close bedroom
+    // Portrait: each pass-through opens a touch earlier + snappier for the same reason as the main door.
+    // The bedroom door stays OPEN through the bed-hero hold (route .74–.84 keeps the camera inside
+    // the room) and only closes once the camera has crossed back out on the handoff swing.
+    if (portrait) {
+      tl.to(villa.groundBedroomDoor.rotation, { y: 1.32, duration: 0.08, ease: 'power2.out' }, 7.10); // open
+      tl.to(villa.groundBathDoor.rotation, { y: -1.30, duration: 0.06, ease: 'power2.out' }, 7.47); // open
+      tl.to(villa.groundBathDoor.rotation, { y: 0, duration: 0.08, ease: 'power2.in' }, 7.72); // close ensuite (after the .68 exit)
+      tl.to(villa.groundBedroomDoor.rotation, { y: 0, duration: 0.06, ease: 'power2.in' }, 7.94); // close bedroom
+    } else {
+      tl.to(villa.groundBedroomDoor.rotation, { y: 1.32, duration: 0.16, ease: 'power2.out' }, 7.14); // open
+      tl.to(villa.groundBathDoor.rotation, { y: -1.30, duration: 0.08, ease: 'power2.out' }, 7.50); // open
+      tl.to(villa.groundBathDoor.rotation, { y: 0, duration: 0.10, ease: 'power2.in' }, 7.72); // close ensuite (after the .68 exit)
+      tl.to(villa.groundBedroomDoor.rotation, { y: 0, duration: 0.06, ease: 'power2.in' }, 7.94); // close bedroom
+    }
 
     // Scenes 6–12: interior warms; the open-top cutaway is scoped only to this tour window.
     tl.to(env.sun, { intensity: 0.58, duration: 0.45 }, 5.0);
@@ -202,12 +250,19 @@ export function createDirector(opts: {
     tl.to(villa.mainDoor.rotation, { y: 0, duration: .38, ease: 'power2.inOut' }, 12.04);
     tl.to(villa.windowMat, { emissiveIntensity: 1.55, duration: 0.8 }, 12.2);
 
-    // Copy overlay: fade each scene label in over its window, out near the end.
+    // Copy overlay: fade each scene label in over its window, out near the end. Desktop shows the
+    // caption over the settled shot; on PORTRAIT the caption holds through most of the scene —
+    // thumb-scrolling moves fast, and a narrow window read as "captions missing" on real phones.
+    // BUT no caption may appear before its shot is actually framed: route scenes wait until the
+    // camera is inside the room (0.3), and the final reveal waits for its exterior settle (0.62) so
+    // the closing line never bleeds through the terrace railing mid-transition.
+    const captionOut = portrait ? 0.94 : 0.88;
     SCENES.forEach((s, idx) => {
       const el = copyEls[idx];
       if (!el || (!s.title && !s.eyebrow)) return;
-      tl.fromTo(el, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, idx + 0.64);
-      tl.to(el, { autoAlpha: 0, y: -10, duration: 0.1, ease: 'power2.in' }, idx + 0.88);
+      const captionIn = portrait ? (s.id === 13 ? 0.62 : s.route ? 0.3 : 0.18) : 0.64;
+      tl.fromTo(el, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, idx + captionIn);
+      tl.to(el, { autoAlpha: 0, y: -10, duration: 0.08, ease: 'power2.in' }, idx + captionOut);
     });
     // Keep normalized timeline progress exactly aligned with the scene windows.
     tl.to({ value: 0 }, { value: 1, duration: .001 }, SCENES.length - .001);

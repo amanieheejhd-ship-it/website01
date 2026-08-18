@@ -96,14 +96,15 @@ export const SCENES: SceneDef[] = [
     key: 'hall',
     eyebrow: 'Welcome home',
     title: 'The living hall',
-    camera: { pos: { x: -0.65, y: 1.78, z: 3.08 }, target: { x: -3.1, y: 1.24, z: .15 } },
+    camera: { pos: { x: -0.5, y: 1.6, z: 3.3 }, target: { x: -3.15, y: 1.1, z: .3 } },
     route: [
-      // The main door swings open and the tour steps STRAIGHT into the hall — sofas first.
+      // The main door swings open and the tour steps STRAIGHT into the hall — sofas first. The
+      // settled shot is EYE-LEVEL (~1.6) and clears the sofa backs: full seating + TV wall + rug.
       { at:.12,pos:{x:-.55,y:2,z:6.4},target:{x:-.55,y:1.5,z:4.4} },
-      { at:.28,pos:{x:-.55,y:2,z:4.62},target:{x:-.7,y:1.4,z:2.6} },
-      { at:.4,pos:{x:-.15,y:1.9,z:3.48},target:{x:-2.9,y:1.28,z:.85} },
-      { at:.48,pos:{x:-.4,y:1.82,z:3.25},target:{x:-3.05,y:1.26,z:.4} },
-      { at:.56,pos:{x:-.65,y:1.78,z:3.08},target:{x:-3.1,y:1.24,z:.15} },
+      { at:.28,pos:{x:-.55,y:1.9,z:4.62},target:{x:-.7,y:1.35,z:2.6} },
+      { at:.4,pos:{x:-.15,y:1.75,z:3.6},target:{x:-2.9,y:1.2,z:.85} },
+      { at:.48,pos:{x:-.35,y:1.66,z:3.42},target:{x:-3.05,y:1.14,z:.5} },
+      { at:.56,pos:{x:-.5,y:1.6,z:3.3},target:{x:-3.15,y:1.1,z:.3} },
     ],
     ease: 'power1.inOut',
   },
@@ -306,14 +307,14 @@ export const SCENES: SceneDef[] = [
       {
         at: .50,
         pos: {
-          x: -3.10,
-          y: 1.74,
-          z: -2.05
+          x: -3.45,
+          y: 1.72,
+          z: -1.72
         },
         target: {
-          x: -4.45,
-          y: 1.32,
-          z: -3.10
+          x: -4.15,
+          y: 1.30,
+          z: -2.60
         }
       },
 
@@ -325,14 +326,14 @@ export const SCENES: SceneDef[] = [
       {
         at: .55,
         pos: {
-          x: -3.95,
-          y: 1.72,
-          z: -2.35
+          x: -4.13,
+          y: 1.70,
+          z: -1.90
         },
         target: {
-          x: -4.70,
+          x: -4.75,
           y: 1.30,
-          z: -3.50
+          z: -3.05
         }
       },
 
@@ -344,14 +345,14 @@ export const SCENES: SceneDef[] = [
       {
         at: .59,
         pos: {
-          x: -4.35,
-          y: 1.68,
-          z: -2.95
+          x: -3.92,
+          y: 1.60,
+          z: -2.46
         },
         target: {
           x: -5.15,
-          y: 1.28,
-          z: -3.50
+          y: 1.22,
+          z: -3.05
         }
       },
 
@@ -363,14 +364,14 @@ export const SCENES: SceneDef[] = [
       {
         at: .63,
         pos: {
-          x: -4.55,
-          y: 1.68,
-          z: -3.25
+          x: -4.15,
+          y: 1.60,
+          z: -2.62
         },
         target: {
-          x: -4.30,
-          y: 1.15,
-          z: -3.85
+          x: -4.72,
+          y: 1.10,
+          z: -3.68
         }
       },
 
@@ -382,63 +383,64 @@ export const SCENES: SceneDef[] = [
       {
         at: .68,
         pos: {
-          x: -3.95,
-          y: 1.72,
-          z: -2.55
+          x: -4.05,
+          y: 1.70,
+          z: -2.32
         },
         target: {
-          x: -2.50,
-          y: 1.35,
-          z: -2.10
+          x: -2.80,
+          y: 1.38,
+          z: -1.80
         }
       },
 
 
       // --------------------------------------------------------
-      // 14. RETURN THROUGH BEDROOM
+      // 14. BED HERO HOLD (the caption shot: bed + bedding is the
+      // clear subject, wardrobe to the side — NOT a wall/door).
       // --------------------------------------------------------
 
       {
         at: .74,
         pos: {
+          x: -1.85,
+          y: 1.38,
+          z: -1.38
+        },
+        target: {
           x: -2.50,
-          y: 1.77,
-          z: -1.65
-        },
-        target: {
-          x: -1.50,
-          y: 1.40,
-          z: -.30
+          y: 1.12,
+          z: -3.85
         }
       },
 
 
       // --------------------------------------------------------
-      // 15. EXIT BEDROOM
-      // Bedroom door closes behind camera.
+      // 15. HOLD — bed-hero angle (same family as waypoint 6, well
+      // clear of the open door leaf): bed + bedding + headboard.
       // --------------------------------------------------------
 
       {
-        at: .80,
+        at: .84,
         pos: {
-          x: -1.45,
-          y: 1.80,
-          z: -.50
+          x: -1.90,
+          y: 1.40,
+          z: -1.42
         },
         target: {
-          x: -.70,
-          y: 1.42,
-          z: 2.60
+          x: -2.48,
+          y: 1.14,
+          z: -3.80
         }
       },
 
 
       // --------------------------------------------------------
-      // 16. HANDOFF TOWARD MAIN ENTRANCE
+      // 16. QUICK HANDOFF SWING TOWARD MAIN ENTRANCE
       // --------------------------------------------------------
 
       {
-        at: .88,
+        at: .93,
         pos: {
           x: -1.10,
           y: 1.82,
@@ -732,14 +734,15 @@ export const SCENES: SceneDef[] = [
     key: 'washroom',
     eyebrow: 'Attached to the master',
     title: 'The attached washroom',
-    camera: { pos: { x: -4.45, y: 4.95, z: -2.5 }, target: { x: -4.62, y: 4.45, z: -3.72 } },
+    camera: { pos: { x: -3.55, y: 4.82, z: -2.55 }, target: { x: -4.7, y: 4.42, z: -3.62 } },
     route: [
-      // Walk INSIDE the bedroom to its internal door, and step THROUGH it into the ensuite.
+      // Walk INSIDE the bedroom to its internal door, and step THROUGH it into the ensuite. The
+      // settled shot stands in the room centre: vanity + seated basins + mirror, shower to the side.
       { at:.14,pos:{x:-3.2,y:5.05,z:2.2},target:{x:-5.05,y:4.4,z:-1.5} },
       { at:.3,pos:{x:-4.55,y:5.0,z:.7},target:{x:-5.1,y:4.4,z:-1.9} },
       { at:.44,pos:{x:-5.06,y:4.98,z:-1.15},target:{x:-5.1,y:4.35,z:-2.6} },
-      { at:.52,pos:{x:-5.07,y:4.95,z:-2.15},target:{x:-4.5,y:4.35,z:-3.7} },
-      { at:.56,pos:{x:-4.45,y:4.95,z:-2.5},target:{x:-4.62,y:4.45,z:-3.72} },
+      { at:.52,pos:{x:-4.4,y:4.9,z:-2.05},target:{x:-4.65,y:4.45,z:-3.55} },
+      { at:.56,pos:{x:-3.55,y:4.82,z:-2.55},target:{x:-4.7,y:4.42,z:-3.62} },
     ],
     ease: 'power1.inOut',
   },
@@ -748,15 +751,17 @@ export const SCENES: SceneDef[] = [
     key: 'second-bedroom',
     eyebrow: 'Room to grow',
     title: 'The second bedroom',
-    camera: { pos: { x: 4.2, y: 5.1, z: 4.55 }, target: { x: 3.45, y: 4.15, z: 2.2 } },
+    camera: { pos: { x: 2.6, y: 4.95, z: 3.3 }, target: { x: 3.9, y: 4.15, z: 1.55 } },
     route: [
-      // Back out through the ensuite door, across the landing to the second bedroom.
+      // Back out through the ensuite door, across the landing INTO the second bedroom. The settled
+      // shot stands INSIDE the room (the old one stood outside on the balcony, shooting the window
+      // frame + a parapet orb): bed + desk + wardrobe on one clean diagonal.
       { at:.1,pos:{x:-5.08,y:4.98,z:-1.35},target:{x:-3.6,y:4.5,z:.8} },
       { at:.2,pos:{x:-4.0,y:5.05,z:.6},target:{x:-1.5,y:4.5,z:2.4} },
       { at:.32,pos:{x:-1.6,y:5.1,z:2.7},target:{x:.6,y:4.6,z:3.6} },
       { at:.42,pos:{x:.55,y:5.1,z:4.25},target:{x:2,y:4.7,z:4.25} },
-      { at:.52,pos:{x:3.4,y:5.1,z:4.55},target:{x:3.45,y:4.3,z:2.25} },
-      { at:.56,pos:{x:4.2,y:5.1,z:4.55},target:{x:3.45,y:4.15,z:2.2} },
+      { at:.52,pos:{x:2.9,y:5.0,z:3.5},target:{x:3.7,y:4.25,z:1.9} },
+      { at:.56,pos:{x:2.6,y:4.95,z:3.3},target:{x:3.9,y:4.15,z:1.55} },
     ],
     ease: 'power1.inOut',
   },
@@ -786,6 +791,52 @@ export const SCENES: SceneDef[] = [
 
 /** Per-scene duration on the timeline is uniform; total = SCENES.length. */
 export const SCENE_COUNT = SCENES.length;
+
+/**
+ * Per-scene scroll distance (vh). Touch devices get a shorter run so the full story doesn't demand
+ * exhausting thumb-scrolling; the scene order/choreography is identical (the timeline is normalized
+ * to the spacer, so only the scrub distance changes).
+ */
+export function sceneScrollVh(coarsePointer: boolean): number {
+  return coarsePointer ? 52 : 80;
+}
+
+/**
+ * PORTRAIT FRAMING (aspect < ~0.75): the desktop cameras are composed for landscape; a phone held
+ * upright crops the sides badly (half the villa, wall close-ups). The director compensates by
+ * dollying each camera BACK along its own view axis (`back`, world units), raising it (`up`) and —
+ * where the floor otherwise fills the frame — lifting the aim point (`aimUp`). Values are authored
+ * per scene against the real world coordinates: generous for wide exteriors, small for interiors
+ * (a big pull-back would push the camera through a wall).
+ */
+export interface PortraitTweak {
+  back: number;
+  up: number;
+  aimUp?: number;
+}
+
+export const PORTRAIT_DEFAULT_TWEAK: PortraitTweak = { back: 0.6, up: 0.2 };
+
+export const PORTRAIT_TWEAKS: Record<number, PortraitTweak> = {
+  1: { back: 6.5, up: 1.6 }, // empty land — terrain + horizon, never a dark slice
+  2: { back: 5.5, up: 1.4 }, // foundation — whole slab + rebar grid
+  3: { back: 7.5, up: 1.6 }, // structure — full frame + columns (was a cropped wall corner)
+  4: { back: 10.5, up: 2.2 }, // villa transformation — the WHOLE villa, not a centre slice
+  5: { back: 3.0, up: 0.8 }, // gate — the full entrance
+  // INTERIORS: keep the dolly-back TINY. The wider portrait FOV already gives headroom, and a big
+  // pull-back pushes the camera through walls/sofas/window planes (the owner's "blocked frame",
+  // "sofa clip", "top-down lamps" and "window close-up" defects all traced to aggressive backs).
+  6: { back: 0.15, up: 0.1 }, // living hall — stay in front of the sofa line, eye-level
+  7: { back: 0.2, up: 0.05 }, // kitchen — eye-level across the island, never above the pendants
+  8: { back: 0.15, up: 0.05 }, // guest suite
+  9: { back: 0.55, up: 0.15 }, // exterior walk + staircase (outdoor legs tolerate a little more)
+  10: { back: 0.08, up: 0, aimUp: -0.15 }, // ensuite — aim slightly DOWN, away from the open-top void
+  11: { back: 0.15, up: 0.05 }, // second bedroom — stay inside the window plane
+  // Terrace: NO dolly-back (the camera already stands at the parapet — pulling back exits over the
+  // roof slab and the slab fills the frame). Lift the aim instead so the skyline composes.
+  12: { back: 0.15, up: 0.1, aimUp: 0.55 },
+  13: { back: 9.0, up: 1.6 }, // final reveal — the whole villa with breathing room
+};
 
 /** Convert a scene id (1-based) to its timeline window [start,end] in seconds (duration units). */
 export function sceneWindow(id: number): [number, number] {

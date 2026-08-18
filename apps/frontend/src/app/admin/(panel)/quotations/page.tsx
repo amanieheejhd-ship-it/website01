@@ -9,9 +9,9 @@ import { EmptyState, PageHeader, Pagination, Select, Spinner, StatusBadge, TBody
 import { useToast } from '../../_components/toast';
 import { ApiError, adminApi, qk } from '../../_lib/admin-client';
 import { formatMinor } from '../../_lib/money';
+import { QUOTE_STATUSES } from './statuses';
 
 const LIMIT = 20;
-export const QUOTE_STATUSES: QuotationStatus[] = ['requested', 'reviewing', 'quoted', 'won', 'lost'];
 
 export default function QuotationsPage() {
   const qc = useQueryClient();

@@ -9,7 +9,7 @@ import { EmptyState, Select, Spinner, StatusBadge, TBody, TD, TH, THead, TR, Tab
 import { useToast } from '../../_components/toast';
 import { ApiError, adminApi, qk } from '../../_lib/admin-client';
 import { formatMinor } from '../../_lib/money';
-import { QUOTE_STATUSES } from './page';
+import { QUOTE_STATUSES } from './statuses';
 
 export function QuotationDetail({ id }: { id: string }) {
   const qc = useQueryClient();

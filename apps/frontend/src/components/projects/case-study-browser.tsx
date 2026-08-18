@@ -22,7 +22,7 @@ export function CaseStudyBrowser({ categories, projectsByCategory }: { categorie
     <div>
       <nav aria-label="Portfolio categories" className="flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((category) => (
-          <button key={category.slug} type="button" onClick={() => setActiveSlug(category.slug)} aria-selected={activeSlug === category.slug} role="tab" className={`shrink-0 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.15em] transition ${activeSlug === category.slug ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/15 text-muted hover:border-gold/40 hover:text-foreground'}`}>
+          <button key={category.slug} type="button" onClick={() => setActiveSlug(category.slug)} aria-selected={activeSlug === category.slug} role="tab" className={`min-h-11 shrink-0 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.15em] transition ${activeSlug === category.slug ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/15 text-muted hover:border-gold/40 hover:text-foreground'}`}>
             {category.number} {category.navLabel}
           </button>
         ))}

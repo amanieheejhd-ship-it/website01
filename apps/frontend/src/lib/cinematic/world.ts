@@ -416,8 +416,11 @@ function buildLandscape() {
   buildEstateVilla(1, -34, 0.08, 0.76);
 
   const lampMat = new THREE.MeshStandardMaterial({ color: 0x211b13, emissive: 0xffb45e, emissiveIntensity: 3 });
-  for (let i = 0; i < 8; i++) {
-    const x = i < 4 ? 5.2 + i * 2 : -5 + (i - 4) * 1.6;
+  // Path lamps flank the pedestrian walkway ONLY — none on the door axis. (Two used to sit right in
+  // front of the entrance, where their dark posts vanished at dusk and the lit caps read as two
+  // floating rectangles.)
+  for (let i = 0; i < 6; i++) {
+    const x = i < 4 ? 5.2 + i * 2 : -5.5 + (i - 4) * 1.3;
     const z = i < 4 ? 0.4 : 7.5;
     cylinder(group, 0.07, 0.55, [x, 0.34, z], metal);
     box(group, [0.18, 0.15, 0.18], [x, 0.68, z], lampMat);
@@ -838,8 +841,13 @@ function buildVilla() {
     opacity: .26, depthWrite: false, envMapIntensity: .35, clearcoat: 1, clearcoatRoughness: .08,
     side: THREE.DoubleSide,
   });
+  // Dim, neutral interior sheen — NOT a sky reflector. With metalness 1 + strong envMapIntensity
+  // the bathroom mirrors bounced the HDRI sky and read as holes to outdoors.
   const mirrorPanel = new THREE.MeshPhysicalMaterial({
-    color: 0x7f8989, roughness: .045, metalness: 1, clearcoat: 1, clearcoatRoughness: .02, envMapIntensity: .5,
+    // clearcoat must stay 0 — the clearcoat layer reflects the environment regardless of
+    // envMapIntensity, which is exactly the sky-in-the-mirror defect. Soft gray glass, dim
+    // neutral interior sheen: never the sky, never a black hole.
+    color: 0x8b949c, roughness: .22, metalness: .15, clearcoat: 0, envMapIntensity: .15,
   });
   const lightMat = new THREE.MeshStandardMaterial({ color: 0xd8b887, emissive: 0xffb968, emissiveIntensity: 0.38, roughness: .5 });
   const art = new THREE.MeshStandardMaterial({ color: 0x8a5c37, roughness: 0.65, metalness: 0.05 });
@@ -1788,6 +1796,17 @@ function buildVilla() {
     });
 
 
+  // Warm ivory bed linen — visually distinct from the plain `white` so the made bed reads as
+  // bedding (duvet/pillows), never as a bare slab.
+  const guestLinen =
+    new THREE.MeshStandardMaterial({
+      color: 0xe9dfcf,
+      roughness: .88,
+      metalness: 0,
+      envMapIntensity: .42,
+    });
+
+
   const guestBronze =
     new THREE.MeshStandardMaterial({
       color: 0x987044,
@@ -1838,6 +1857,9 @@ function buildVilla() {
   // Front-wall EAST sliver — the living hall wall already occludes x[-5.75,-1.55];
   // this seals the remaining strip east of it so the room is hidden with the door shut.
   box(groundGuestSuite, [.89, 2.55, .12], [-1.105, 1.78, -1.20], guestWall);
+  // Hall-side walnut panelling over the sliver — replaces the raw speckled-concrete patch that
+  // showed beside the hall/kitchen doorway (finished material, matches the palette).
+  box(groundGuestSuite, [.89, 2.30, .03], [-1.105, 1.65, -1.13], guestWood);
 
   // ------------------------------------------------------------
   // PREMIUM DOOR FRAME (the hall-side opening, x[-2.57,-1.67])
@@ -1874,14 +1896,18 @@ function buildVilla() {
   box(groundGuestSuite, [3.00, .025, 2.30], [-2.45, .545, -2.94], guestAccent); // large rug
 
   // ============================================================
-  // PREMIUM KING BED (centre x -2.35, head to the north wall)
+  // QUEEN BED (centre x -2.35, head to the north wall) — a clearly MADE bed:
+  // frame → mattress → full duvet with a white turned-down sheet → four pillows → folded throw.
+  // Narrower than the old king so the nightstands flank OUTSIDE the bed footprint.
   // ============================================================
-  box(groundGuestSuite, [2.10, .18, 1.98], [-2.35, .66, -3.00], guestDarkWood); // floating plinth
-  box(groundGuestSuite, [2.00, .26, 1.90], [-2.35, .86, -2.98], guestFabric);    // upholstered base
-  box(groundGuestSuite, [1.92, .20, 1.74], [-2.35, 1.08, -2.92], white);         // mattress
-  box(groundGuestSuite, [1.66, .07, .58], [-2.35, 1.21, -2.28], guestAccent);    // folded runner at foot
-  for (const x of [-2.70, -2.00]) box(groundGuestSuite, [.62, .20, .40], [x, 1.25, -3.42], guestFabric); // pillows
-  box(groundGuestSuite, [1.6, .10, .5], [-2.35, 1.20, -3.05], white);            // duvet fold
+  box(groundGuestSuite, [1.80, .18, 1.98], [-2.35, .66, -3.00], guestDarkWood); // floating plinth
+  box(groundGuestSuite, [1.72, .26, 1.90], [-2.35, .86, -2.98], guestFabric);    // upholstered base
+  box(groundGuestSuite, [1.64, .20, 1.74], [-2.35, 1.08, -2.92], white);         // mattress
+  box(groundGuestSuite, [1.70, .10, 1.16], [-2.35, 1.205, -2.72], guestLinen);   // duvet (covers 2/3)
+  box(groundGuestSuite, [1.66, .045, .30], [-2.35, 1.26, -3.14], white);         // turned-down sheet
+  box(groundGuestSuite, [1.58, .06, .48], [-2.35, 1.245, -2.36], guestAccent);   // folded throw at foot
+  for (const x of [-2.73, -1.97]) box(groundGuestSuite, [.60, .20, .38], [x, 1.26, -3.44], guestLinen);  // back pillows
+  for (const x of [-2.70, -2.00]) box(groundGuestSuite, [.50, .14, .30], [x, 1.24, -3.20], guestFabric); // front pillows
 
   // ============================================================
   // FEATURE WALL (north, behind the bed — the room's visual hero)
@@ -1898,26 +1924,36 @@ function buildVilla() {
   box(groundGuestSuite, [2.66, .02, .02], [-2.35, 2.66, -3.90], guestGlow);        // concealed warm LED
 
   // ============================================================
-  // FLOATING BEDSIDE TABLES + LAMPS
+  // NIGHTSTANDS + LAMPS — freestanding, FLANKING the bed (never on it):
+  // bed now spans x[-3.25,-1.45]; stands sit clear at -3.62 / -1.08.
   // ============================================================
-  for (const x of [-3.16, -1.54]) {
-    box(groundGuestSuite, [.10, .40, .34], [x, .80, -3.62], guestDarkWood);  // bracket
-    box(groundGuestSuite, [.46, .09, .40], [x, 1.02, -3.58], guestWood);     // top
-    cylinder(groundGuestSuite, .04, .20, [x, 1.16, -3.58], guestBronze);     // lamp stem
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(.09, 16, 12), guestGlow);
-    lamp.position.set(x, 1.32, -3.58);
+  for (const x of [-3.62, -1.08]) {
+    box(groundGuestSuite, [.30, .04, .30], [x, .52, -3.62], guestDarkWood);   // plinth foot
+    box(groundGuestSuite, [.42, .44, .40], [x, .74, -3.62], guestDarkWood);   // body
+    box(groundGuestSuite, [.46, .05, .44], [x, .985, -3.62], guestWood);      // top
+    box(groundGuestSuite, [.02, .26, .02], [x + .17, .82, -3.44], guestBronze); // drawer pull
+    cylinder(groundGuestSuite, .035, .18, [x, 1.10, -3.62], guestBronze);     // lamp stem
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(.085, 16, 12), guestGlow);
+    lamp.position.set(x, 1.27, -3.62);
     groundGuestSuite.add(lamp);
   }
 
   // ============================================================
   // WARDROBE (east wall) — walnut, bronze handles, one mirrored door
   // ============================================================
-  box(groundGuestSuite, [.52, 2.30, 1.94], [-.94, 1.65, -3.00], guestDarkWood); // body
-  for (const z of [-3.72, -3.28, -2.84, -2.40])
+  box(groundGuestSuite, [.52, 2.30, .94], [-.94, 1.65, -2.87], guestDarkWood); // body (shorter — clears the nightstand)
+  for (const z of [-3.10, -2.64])
     box(groundGuestSuite, [.03, 2.06, .40], [-.68, 1.65, z], guestWood);        // door faces
-  box(groundGuestSuite, [.02, 1.92, .38], [-.665, 1.66, -2.40], mirror);        // one mirrored section
-  for (const z of [-3.62, -3.34, -2.90, -2.46])
+  box(groundGuestSuite, [.02, 1.92, .38], [-.665, 1.66, -2.64], mirrorPanel);   // one mirrored section (dim interior)
+  for (const z of [-3.00, -2.54])
     box(groundGuestSuite, [.02, .34, .02], [-.64, 1.55, z], guestBronze);       // slim handles
+
+  // Curtained window on the east wall (revealed by the shorter wardrobe).
+  box(groundGuestSuite, [.04, 1.36, .84], [-.68, 1.72, -1.90], guestDarkWood);  // frame
+  box(groundGuestSuite, [.03, 1.24, .72], [-.70, 1.72, -1.90], interiorGlass);  // pane
+  box(groundGuestSuite, [.06, .10, 1.10], [-.74, 2.46, -1.90], guestDarkWood);  // pelmet
+  for (const z of [-1.48, -2.32])
+    box(groundGuestSuite, [.06, 1.78, .28], [-.74, 1.52, z], guestLinen);       // curtain panels
 
   // ============================================================
   // DRESSING NOOK + BENCH + PLANT + ART (west / south-west)
@@ -1928,13 +1964,13 @@ function buildVilla() {
   // Dressing console against the west wall.
   box(groundGuestSuite, [.44, .06, 1.10], [-5.06, .88, -1.95], guestWood);
   box(groundGuestSuite, [.06, .80, 1.00], [-5.24, .48, -1.95], guestDarkWood);
-  box(groundGuestSuite, [.03, 1.50, .70], [-5.27, 1.36, -1.95], mirror);  // tall dressing mirror
+  box(groundGuestSuite, [.03, 1.50, .70], [-5.27, 1.36, -1.95], mirrorPanel);  // tall dressing mirror (dim interior)
   box(groundGuestSuite, [.40, .40, .40], [-4.74, .44, -2.00], guestFabric); // stool
-  // Statement plant in the SW corner.
-  cylinder(groundGuestSuite, .18, .5, [-5.02, .77, -1.42], guestDarkWood);
-  const guestPlant = new THREE.Mesh(new THREE.SphereGeometry(.36, 14, 10), livingGreen);
-  guestPlant.scale.set(.9, 1.15, .9);
-  guestPlant.position.set(-5.02, 1.28, -1.42);
+  // Small, correctly-scaled potted plant in the SW corner — clear of the mirror and camera.
+  cylinder(groundGuestSuite, .10, .18, [-5.05, .60, -1.38], guestDarkWood);
+  const guestPlant = new THREE.Mesh(new THREE.SphereGeometry(.15, 12, 10), livingGreen);
+  guestPlant.scale.set(1, 1.3, 1);
+  guestPlant.position.set(-5.05, .88, -1.38);
   groundGuestSuite.add(guestPlant);
   // Framed art on the east front-wall sliver.
   box(groundGuestSuite, [.66, .92, .03], [-1.10, 1.72, -1.26], guestBronze);
@@ -1954,7 +1990,7 @@ function buildVilla() {
   ceilingLight(groundGuestSuite, -3.40, 2.96, -2.10, .11);
 
   // Warm bedroom fill light.
-  const guestKey = new THREE.PointLight(0xffc38a, 1.7, 5.2, 2);
+  const guestKey = new THREE.PointLight(0xffc38a, 1.15, 5.2, 2);
   guestKey.position.set(-2.4, 2.42, -2.7);
   guestKey.castShadow = false;
   groundGuestSuite.add(guestKey);
@@ -1965,21 +2001,24 @@ function buildVilla() {
   const groundGuestBath = new THREE.Group();
   groundGuestBath.name = 'ground-floor-guest-ensuite-v15';
 
-  // Ensuite dividing walls (east + south, with the door opening in the south wall).
-  box(groundGuestBath, [.11, 2.55, 1.45], [-3.80, 1.78, -3.325], guestWall);     // east wall
-  box(groundGuestBath, [.80, 2.55, .11], [-4.90, 1.78, -2.60], guestWall);       // south wall, west of door
-  box(groundGuestBath, [.70, .70, .11], [-4.15, 2.62, -2.60], guestWall);        // header over door (opening h 2.32)
+  // ENLARGED footprint: x[-5.30,-3.80] × z[-2.20,-4.05] (was a cramped 1.5×1.45 box with the WC
+  // straight at the door). Entered through its own hinged door from INSIDE the bedroom.
+  // Layout: vanity + mirror on the WEST wall (the hero straight ahead from the door), glass shower
+  // in the NW corner, WC against the EAST wall behind a half-screen — never at/facing the entry.
+  box(groundGuestBath, [.11, 2.55, 1.85], [-3.80, 1.78, -3.125], guestWall);     // east wall
+  box(groundGuestBath, [.80, 2.55, .11], [-4.90, 1.78, -2.20], guestWall);       // south wall, west of door
+  box(groundGuestBath, [.70, .70, .11], [-4.15, 2.62, -2.20], guestWall);        // header over door (opening h 2.32)
 
   // Tiled floor + tiled wall accents.
-  box(groundGuestBath, [1.50, .06, 1.45], [-4.55, .505, -3.325], guestTile);
-  box(groundGuestBath, [.03, 1.8, 1.4], [-5.28, 1.5, -3.325], guestTile);        // west wall tile
+  box(groundGuestBath, [1.50, .06, 1.85], [-4.55, .505, -3.125], guestTile);
+  box(groundGuestBath, [.03, 1.8, 1.80], [-5.28, 1.5, -3.125], guestTile);       // west wall tile
   box(groundGuestBath, [1.46, 1.8, .03], [-4.55, 1.5, -4.02], guestTile);        // north wall tile
 
   // ------------------------------------------------------------
   // ENSUITE DOOR (LIVE PIVOT — hinged on the east jamb, swings into the bath)
   // ------------------------------------------------------------
   const bathDoorPivot = new THREE.Group();
-  bathDoorPivot.position.set(-3.80, .50, -2.60);
+  bathDoorPivot.position.set(-3.80, .50, -2.20);
   bathDoorPivot.rotation.y = 0; // CLOSED — director animates
   const bathDoor = new THREE.Mesh(new THREE.BoxGeometry(.70, 2.02, .05), guestDarkWood);
   bathDoor.position.set(-.35, 1.01, 0);
@@ -1991,36 +2030,47 @@ function buildVilla() {
   groundGuestBath.add(bathDoorPivot);
 
   // ------------------------------------------------------------
-  // FLOATING VANITY + MIRROR (west wall)
+  // FLOATING VANITY + MIRROR (west wall — the hero view from the door)
   // ------------------------------------------------------------
-  box(groundGuestBath, [.40, .30, .86], [-5.08, .86, -3.40], guestWood);
-  box(groundGuestBath, [.46, .05, .92], [-5.06, 1.03, -3.40], white);
+  box(groundGuestBath, [.42, .34, .90], [-5.06, .84, -2.90], guestWood);
+  box(groundGuestBath, [.48, .05, .96], [-5.05, 1.035, -2.90], white);
+  box(groundGuestBath, [.46, .006, .90], [-5.05, 1.062, -2.90], dark);       // shadow line seats the basin
   const guestSink = new THREE.Mesh(new THREE.CylinderGeometry(.15, .12, .09, 20), white);
-  guestSink.position.set(-5.05, 1.11, -3.40);
+  guestSink.position.set(-5.04, 1.11, -2.90);
   groundGuestBath.add(guestSink);
-  cylinder(groundGuestBath, .018, .16, [-5.14, 1.16, -3.40], guestBronze); // tap
-  box(groundGuestBath, [.03, .80, .66], [-5.27, 1.55, -3.40], mirror);
-  box(groundGuestBath, [.02, .02, .58], [-5.23, 2.00, -3.40], guestGlow);  // warm mirror light
+  cylinder(groundGuestBath, .018, .16, [-5.14, 1.16, -2.90], guestBronze); // tap
+  box(groundGuestBath, [.03, .80, .66], [-5.27, 1.55, -2.90], mirrorPanel); // dim interior mirror, correct height
+  box(groundGuestBath, [.02, .02, .58], [-5.23, 2.00, -2.90], guestGlow);  // warm mirror light
+  // Towel rail + small shelf on the south wall.
+  box(groundGuestBath, [.40, .025, .025], [-4.90, 1.52, -2.30], guestBronze);
+  box(groundGuestBath, [.40, .03, .16], [-4.90, 1.88, -2.32], guestWood);
 
   // ------------------------------------------------------------
   // TOILET (south-east, clear of the door swing)
   // ------------------------------------------------------------
-  box(groundGuestBath, [.36, .34, .46], [-4.22, .68, -3.02], white);
-  box(groundGuestBath, [.34, .34, .14], [-4.22, .92, -2.86], white); // cistern
+  // WC against the EAST wall, behind a tiled half-screen — away from and never facing the door.
+  box(groundGuestBath, [.42, 1.35, .06], [-4.02, 1.17, -3.06], guestWall);        // half-screen
+  box(groundGuestBath, [.15, .42, .34], [-3.89, 1.02, -3.42], white);             // cistern on the wall
+  box(groundGuestBath, [.34, .30, .42], [-4.06, .68, -3.42], white);              // bowl
+  box(groundGuestBath, [.36, .035, .44], [-4.06, .855, -3.42], white);            // seat
 
   // ------------------------------------------------------------
-  // GLASS SHOWER ENCLOSURE (north-west)
+  // GLASS SHOWER ENCLOSURE (north-west corner, slim bronze frame)
   // ------------------------------------------------------------
-  box(groundGuestBath, [.76, .04, .50], [-4.90, .52, -3.78], guestTile);          // tray
-  box(groundGuestBath, [.03, 1.95, .52], [-4.53, 1.50, -3.78], interiorGlass);    // glass side
-  box(groundGuestBath, [.78, 1.95, .03], [-4.90, 1.50, -3.53], interiorGlass);    // glass front
-  cylinder(groundGuestBath, .05, .05, [-5.06, 2.30, -3.86], guestBronze);         // rain head arm
-  box(groundGuestBath, [.20, .04, .20], [-5.06, 2.24, -3.86], guestBronze);       // rain head
-  box(groundGuestBath, [.04, .5, .04], [-5.20, 1.30, -3.86], guestBronze);        // riser rail
+  box(groundGuestBath, [.80, .05, .72], [-4.90, .525, -3.66], guestTile);         // tray
+  box(groundGuestBath, [.03, 1.95, .74], [-4.49, 1.50, -3.66], interiorGlass);    // glass side
+  box(groundGuestBath, [.82, 1.95, .03], [-4.90, 1.50, -3.28], interiorGlass);    // glass front
+  box(groundGuestBath, [.025, 1.95, .025], [-4.49, 1.50, -3.295], guestBronze);   // slim corner frame
+  cylinder(groundGuestBath, .05, .05, [-5.06, 2.30, -3.80], guestBronze);         // rain head arm
+  box(groundGuestBath, [.20, .04, .20], [-5.06, 2.24, -3.80], guestBronze);       // rain head
+  box(groundGuestBath, [.04, .5, .04], [-5.20, 1.30, -3.80], guestBronze);        // riser rail
 
-  // Ensuite ceiling + downlight.
-  box(groundGuestBath, [1.46, .05, 1.42], [-4.55, 3.00, -3.325], guestWall);
-  ceilingLight(groundGuestBath, -4.55, 2.92, -3.30, .12);
+  // Ensuite ceiling + downlight + warm fill.
+  box(groundGuestBath, [1.46, .05, 1.82], [-4.55, 3.00, -3.125], guestWall);
+  ceilingLight(groundGuestBath, -4.55, 2.92, -3.05, .12);
+  const guestBathLight = new THREE.PointLight(0xffc38a, .75, 3.5, 2);
+  guestBathLight.position.set(-4.55, 2.5, -3.0);
+  groundGuestBath.add(guestBathLight);
 
   groundGuestSuite.add(groundGuestBath);
 
@@ -3708,8 +3758,24 @@ function buildVilla() {
 
 
 
-const landing = new THREE.Group();
+// Warm stair lighting so the climb reads clearly (tour-only: the lights live inside the stairs
+  // group, cast no shadows, and cost nothing outside the tour).
+  const stairSconceMat = new THREE.MeshStandardMaterial({ color: 0x2a2118, emissive: 0xffc98a, emissiveIntensity: 2.6, roughness: .6 });
+  for (const [sy, sz] of [[2.15, -1.6], [3.0, .6], [3.85, 2.6]] as const) {
+    box(stairs, [.05, .22, .1], [6.53, sy, sz], stairSconceMat);
+  }
+  const stairLightLower = new THREE.PointLight(0xffd9a0, .85, 7, 1.8);
+  stairLightLower.position.set(6.95, 3.0, -.8);
+  stairs.add(stairLightLower);
+  const stairLightUpper = new THREE.PointLight(0xffd9a0, .8, 7, 1.8);
+  stairLightUpper.position.set(6.75, 4.5, 3.1);
+  stairs.add(stairLightUpper);
+
+  const landing = new THREE.Group();
   roomShell(landing,0,3.55,-.25,2.1,4.9,{floor:false});
+  const landingLight = new THREE.PointLight(0xffd9a0, .7, 6, 1.8);
+  landingLight.position.set(.3, 5.25, -.2);
+  landing.add(landingLight);
   box(landing,[1.5,.08,4.9],[.3,3.55,-.25],floorMat);
   box(landing,[.65,.08,.95],[-.725,3.55,-2.225],floorMat);
   box(landing,[.65,.08,1.05],[-.725,3.55,1.675],floorMat);
@@ -3786,7 +3852,12 @@ const landing = new THREE.Group();
   const enSeat = new THREE.Mesh(new THREE.TorusGeometry(.21,.028,8,20),white); enSeat.rotation.x=Math.PI/2; enSeat.scale.x=1.28; enSeat.position.set(-5.03,3.945,-2.25); masterBath.add(enSeat);
   box(masterBath,[.42,.035,.34],[-5.08,3.96,-2.25],white);
   box(masterBath,[.025,.025,.6],[-2.41,4.55,-2.5],bronze); // towel rail beside the door
-  ceilingLight(masterBath,-3.95,5.9,-2.95,.15);
+  // Own ceiling: the open-top interior cutaway otherwise exposes raw sky above the ensuite walls
+  // (the "mirror shows the sky" defect was mostly this void). Lives inside the room group, so it
+  // only exists during the tour and never blocks exterior shots.
+  box(masterBath,[3.3,.07,2.2],[-3.95,5.66,-2.95],wall);
+  box(masterBath,[1.45,.006,.55],[-4.6,4.412,-3.66],dark); // shadow line ON the counter seats the basins
+  ceilingLight(masterBath,-3.95,5.6,-2.95,.15);
 
   const secondBedroom = new THREE.Group();
   roomShell(secondBedroom,3.75,3.55,2.15,3.6,3.55); box(secondBedroom,[2.15,.3,1.75],[3.1,3.74,2.25],furnMat);

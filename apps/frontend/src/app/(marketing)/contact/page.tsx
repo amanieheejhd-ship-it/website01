@@ -27,7 +27,7 @@ export default async function ContactPage({
       <PageHeader
         eyebrow="Get in touch"
         title="Let's build something remarkable"
-        lead="Tell us about your project and our team will get back to you with the right next steps."
+        lead="Tell us what you're planning — we'll come back with clear, practical next steps."
       >
         <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
           <a href={`mailto:${SITE.email}`} className="hover:text-foreground">
@@ -45,8 +45,8 @@ export default async function ContactPage({
           <SectionIntro
             eyebrow="Message us"
             headingId="contact-form-heading"
-            title="Send a quick message"
-            lead="For general enquiries and callbacks. We usually reply within one business day."
+            title="Tell us about your project"
+            lead="A few details are enough to start — we reply within one business day."
           />
           <ContactForm initialSubject={initialSubject} />
         </Container>

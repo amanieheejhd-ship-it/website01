@@ -1,47 +1,28 @@
 import type { Metadata } from 'next';
-import { Container, Prose, Section } from '@fardeen/ui';
-import {
-  getHomePage,
-  getProjects,
-  getServices,
-  getTestimonials,
-  type ContentResponse,
-  type ListResponse,
-  type PaginatedResponse,
-} from '../../lib/api';
-import { absoluteUrl, SITE } from '../../lib/site';
-import { itemListJsonLd } from '../../lib/seo';
-import type { PageDto, ProjectListItemDto, ServiceOfferingDto, TestimonialDto } from '@fardeen/types';
+import { getHomePage } from '../../lib/api';
+import { SITE } from '../../lib/site';
 import { CinematicMount } from '../../components/cinematic/cinematic-mount';
 import { Hero } from '../../components/sections/hero';
-import { ServicesSection } from '../../components/sections/services-section';
-import { ProjectsSection } from '../../components/sections/projects-section';
-import { TestimonialsSection } from '../../components/sections/testimonials-section';
-import { ContactSection } from '../../components/sections/contact-section';
-import { AnsariFaqSection } from '../../components/sections/ansari-faq-section';
-import { JsonLd } from '../../components/seo/json-ld';
+import { UnderOneRoofSection } from '../../components/sections/under-one-roof';
+import { FeaturedProjectsSection } from '../../components/sections/featured-projects';
+import { StatsSection } from '../../components/sections/stats-counters';
+import { CtaBandSection } from '../../components/sections/cta-band';
 
-// Static shell + hourly ISR: the CMS data degrades gracefully (fail-fast fetch → safe() fallbacks),
-// so the page prerenders instantly at build and serves in ~0.2s. The heavy three.js/GSAP cinematic
-// is client-only and hydrates after paint, so it never touches the server render.
+// Static shell + hourly ISR. The homepage is the owner-approved "We Build Dreams" reference layout:
+// hero → 3D cinematic walkthrough (with chapter rail / caption cards / room menu) → icon band →
+// code-drawn featured projects → stat counters → CTA band → footer. Every visual is the live 3D
+// canvas or code-drawn SVG/CSS — no photographs. All showcase content is CURATED LOCAL DATA (the
+// body reads nothing from the DB, so test entries can never leak here); only SEO metadata still
+// consults the CMS with a graceful fallback.
 export const revalidate = 3600;
 
-/** Degrade gracefully — a single service being down must not blank the whole page. */
+/** Degrade gracefully — the CMS being down must not blank the metadata. */
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
     return await p;
   } catch {
     return fallback;
   }
-}
-const emptyList = <T,>(): ListResponse<T> => ({ data: [], meta: { requestId: '' } });
-const emptyPage = <T,>(): PaginatedResponse<T> => ({
-  data: [],
-  meta: { requestId: '', page: 1, limit: 0, total: 0 },
-});
-
-function sectionPayload<T>(home: ContentResponse<PageDto> | null, type: string): T | undefined {
-  return home?.data.sections.find((s) => s.type === type)?.payload as T | undefined;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -56,52 +37,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HomePage() {
-  const [home, services, projects, testimonials] = await Promise.all([
-    safe(getHomePage(), null),
-    safe(getServices(), emptyList<ServiceOfferingDto>()),
-    safe(getProjects({ limit: 6 }), emptyPage<ProjectListItemDto>()),
-    safe(getTestimonials(true), emptyList<TestimonialDto>()),
-  ]);
-
-  const hero = sectionPayload<{ headline?: string; sub?: string }>(home, 'hero') ?? {};
-  const intro = sectionPayload<{ html?: string }>(home, 'richText');
-
+export default function HomePage() {
   return (
     <>
-      <Hero
-        headline={hero.headline ?? SITE.tagline}
-        sub={hero.sub ?? 'From empty land to a finished luxury villa — delivered end to end.'}
-      />
+      <Hero />
 
-      {/* Phase 6a: the pinned cinematic journey (Scenes 1–11) mounts here — client-only, gated on
-          motion + WebGL, additive. With motion off / no WebGL this renders nothing and the static
-          Phase-5 sections below stand in as the complete experience. */}
+      {/* The pinned cinematic journey — client-only, gated on motion + WebGL. With motion off / no
+          WebGL / small screens this renders the reference-styled static navigator instead. */}
       <CinematicMount />
 
-      {intro?.html ? (
-        <Section spacing="sm" aria-label="Introduction">
-          <Container size="wide">
-            <Prose html={intro.html} className="max-w-3xl font-display text-xl text-foreground" />
-          </Container>
-        </Section>
-      ) : null}
-
-      <ServicesSection offerings={services.data} limit={6} />
-      <ProjectsSection projects={projects.data} included={projects.included} limit={6} />
-      <TestimonialsSection testimonials={testimonials.data} included={testimonials.included} />
-      <AnsariFaqSection>
-        <ContactSection />
-      </AnsariFaqSection>
-
-      {services.data.length > 0 ? (
-        <JsonLd
-          data={itemListJsonLd(
-            `${SITE.name} services`,
-            services.data.map((s) => ({ url: absoluteUrl(`/services#${s.slug}`), name: s.name })),
-          )}
-        />
-      ) : null}
+      <UnderOneRoofSection />
+      <FeaturedProjectsSection />
+      <StatsSection />
+      <CtaBandSection />
     </>
   );
 }

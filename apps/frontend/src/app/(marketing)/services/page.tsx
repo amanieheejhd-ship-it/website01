@@ -3,7 +3,8 @@ import type { ServiceOfferingDto } from '@fardeen/types';
 import { buttonVariants, Container, Heading, Section } from '@fardeen/ui';
 import Link from 'next/link';
 import { JsonLd } from '../../../components/seo/json-ld';
-import { CORE_SERVICES, SERVICES_FAQS } from '../../../components/services/services-content';
+import { DisciplinesSection } from '../../../components/services/disciplines';
+import { ServicesFaq } from '../../../components/services/services-faq';
 import { getServices, type ListResponse } from '../../../lib/api';
 import { serviceJsonLd } from '../../../lib/seo';
 import { SITE } from '../../../lib/site';
@@ -80,67 +81,8 @@ export default async function ServicesPage() {
         </Container>
       </header>
 
-      <Section spacing="sm" aria-labelledby="service-index-heading">
-        <Container size="wide">
-          <div className="border-y border-gold/20 py-8 sm:py-10">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-gold">Service disciplines</p>
-                <Heading id="service-index-heading" size="md" className="mt-3">Twelve trades. One accountable team.</Heading>
-              </div>
-              <p className="max-w-xl text-sm leading-relaxed text-muted">Select a discipline or continue through the complete capability overview.</p>
-            </div>
-            <nav aria-label="Service index" className={`${styles.indexScroller} mt-8`}>
-              <ol className="grid min-w-[44rem] grid-cols-4 gap-3 md:min-w-0 lg:grid-cols-6">
-                {CORE_SERVICES.map((service) => (
-                  <li key={service.slug}>
-                    <a className={`${styles.indexLink} flex min-h-16 items-center gap-3 border-b border-white/10 px-2 py-3 text-sm text-muted`} href={`#${service.slug}`}>
-                      <span className="font-display text-gold">{service.number}</span>
-                      <span>{service.shortName}</span>
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          </div>
-        </Container>
-      </Section>
-
-      <div aria-label="Detailed services">
-        {CORE_SERVICES.map((service) => (
-          <section id={service.slug} key={service.slug} className={`${styles.detail} scroll-mt-20 py-16 sm:py-24`} aria-labelledby={`${service.slug}-heading`}>
-            <Container size="wide" className="grid items-start gap-10 border-t border-gold/20 pt-12 md:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] md:gap-16 lg:gap-24">
-              <div className={styles.detailIntro}>
-                <span aria-hidden="true" className={`${styles.serviceNumber} font-display text-7xl leading-none sm:text-8xl`}>{service.number}</span>
-                <h2 id={`${service.slug}-heading`} className="mt-7 max-w-xl font-display text-3xl font-medium leading-tight text-foreground sm:text-4xl lg:text-5xl">{service.title}</h2>
-                <p className="mt-5 max-w-xl text-lg leading-relaxed text-gold/90">{service.positioning}</p>
-              </div>
-              <div className={`${styles.detailBody} md:pt-16`}>
-                <p className="max-w-2xl text-base leading-8 text-muted sm:text-lg">{service.description}</p>
-                <div className="mt-9 grid gap-8 sm:grid-cols-2">
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">What we handle</h3>
-                    <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
-                      {service.includes.map((item) => <li key={item} className="flex gap-3"><span aria-hidden="true" className="text-gold">—</span><span>{item}</span></li>)}
-                    </ul>
-                  </div>
-                  <div className="space-y-7">
-                    <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">Typical applications</h3>
-                      <p className="mt-4 text-sm leading-7 text-muted">{service.applications}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground">Materials & scope</h3>
-                      <p className="mt-4 text-sm leading-7 text-muted">{service.materials}</p>
-                    </div>
-                  </div>
-                </div>
-                <Link href={`/contact?service=${encodeURIComponent(service.title)}`} className={`${buttonVariants({ variant: 'outline' })} mt-9`}>Discuss this service</Link>
-              </div>
-            </Container>
-          </section>
-        ))}
-      </div>
+      {/* Discipline index + EXCLUSIVE detail accordion (one panel open at a time). */}
+      <DisciplinesSection />
 
       <Section aria-labelledby="turnkey-heading" className="border-y border-gold/20 bg-gold/[0.035]">
         <Container size="wide" className="grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-end">
@@ -160,7 +102,7 @@ export default async function ServicesPage() {
       <Section aria-labelledby="process-heading">
         <Container size="wide">
           <p className="text-xs uppercase tracking-[0.28em] text-gold">How we work</p>
-          <Heading id="process-heading" className="mt-4">A clear route from brief to handover</Heading>
+          <Heading id="process-heading" className="mt-4 scroll-mt-24">A clear route from brief to handover</Heading>
           <ol className="mt-12 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 md:grid-cols-5">
             {STEPS.map(([number, title, copy]) => <li key={number} className="bg-background p-6 lg:p-8"><span className="font-display text-2xl text-gold">{number}</span><h3 className="mt-8 text-lg font-medium text-foreground">{title}</h3><p className="mt-3 text-sm leading-7 text-muted">{copy}</p></li>)}
           </ol>
@@ -202,9 +144,7 @@ export default async function ServicesPage() {
       <Section aria-labelledby="services-faq-heading" className="border-y border-gold/20 bg-white/[0.015]">
         <Container size="wide" className="grid gap-12 lg:grid-cols-[.7fr_1.3fr] lg:gap-24">
           <div><p className="text-xs uppercase tracking-[0.28em] text-gold">Services FAQ</p><Heading id="services-faq-heading" className="mt-4">Before your project begins</Heading><p className="mt-5 max-w-md leading-7 text-muted">Practical answers about scope, combinations and how to request an estimate.</p></div>
-          <div className={styles.faq}>
-            {SERVICES_FAQS.map(([question, answer]) => <details key={question} className="group border-b border-gold/20"><summary className="flex min-h-20 cursor-pointer items-center justify-between gap-5 py-5 text-lg font-medium text-foreground transition-colors hover:text-gold"><span>{question}</span><span aria-hidden="true" className="text-2xl font-light text-gold group-open:rotate-45">+</span></summary><p className="max-w-2xl pb-7 pr-10 text-sm leading-7 text-muted">{answer}</p></details>)}
-          </div>
+          <ServicesFaq />
         </Container>
       </Section>
 

@@ -66,7 +66,7 @@ export function ContactForm({ initialSubject = '' }: { initialSubject?: string }
         <SuccessReveal>
           <p className="font-display text-2xl text-foreground">Message received.</p>
           <p className="mt-2 text-muted">
-            Thank you — our team will be in touch shortly. A copy has been sent to your inbox.
+            Thank you — our team will be in touch within one business day.
           </p>
           <Button variant="outline" className="mt-6" onClick={() => mutation.reset()}>
             Send another message
@@ -136,7 +136,7 @@ export function ContactForm({ initialSubject = '' }: { initialSubject?: string }
             <p role="alert" className="text-sm font-medium text-red-400">
               {mutation.error instanceof ApiError
                 ? mutation.error.message
-                : 'Something went wrong. Please try again.'}
+                : 'We couldn’t send your message just now. Please try again in a moment.'}
             </p>
           ) : null}
         </div>
